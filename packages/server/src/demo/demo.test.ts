@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DemoLlmClient } from "./llm.js";
-import { DEMO_PATIENTS, DEMO_PROTOCOLS, DEMO_TEMPLATE, previousNotesFor } from "./data.js";
+import { DEMO_PATIENTS, DEMO_PROTOCOLS, DEMO_TEMPLATE, parsePatientsFile, previousNotesFor } from "./data.js";
 import { extractVisitFacts } from "../pipeline/extract.js";
 import { composeDraft } from "../pipeline/compose.js";
 import { matchProtocols } from "../pipeline/protocols.js";
@@ -41,4 +41,18 @@ describe("demo stand-in model, through the real pipeline", () => {
     expect(today.join(" ")).toMatch(/C1 right lateral/);
     expect(today.join(" ")).not.toMatch(/T6/);
   });
+
+  it("reads a private patients file with a pasted transcript", () => {
+    const [p] = parsePatientsFile(JSON.stringify([{
+      janePatientId: "2001", name: "Dana Reyes", appointmentMinutesAgo: 30,
+      previous: [{ daysAgo: 7, sections: { subjective: "Low back 6/10." } }],
+      transcriptText: "Clinician: How's the back?\nPatient: About a four out of ten.\n\nRecap: L5 left posterior.",
+    }]));
+    expect(p!.transcript).toEqual([
+      { speaker: "Clinician", text: "How's the back?" },
+      { speaker: "Patient", text: "About a four out of ten." },
+      { text: "Recap: L5 left posterior." },
+    ]);
+  });
 });
+

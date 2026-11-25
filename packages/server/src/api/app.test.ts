@@ -198,6 +198,16 @@ describe("API", () => {
     expect((await repos.jobs.get(draft.jobId))?.status).toBe("inserted");
   });
 
+  it("files appointments under the practice's date even when the browser's date differs (G-26)", async () => {
+    // 2026-12-02T02:00Z is still Dec 1 in Los Angeles; a browser on UTC would say Dec 2.
+    await authed(request(app).post("/appointments/sync")).send({
+      date: "2026-12-02",
+      appointments: [{ start: "2026-12-02T02:00:00.000Z", end: "2026-12-02T02:30:00.000Z", janePatientId: "1001", patientDisplayName: "Test Patient A" }],
+    }).expect(200);
+    expect(await repos.appointments.listDay("2026-12-01")).toHaveLength(1);
+    expect(await repos.appointments.listDay("2026-12-02")).toHaveLength(0);
+  });
+
   it("returns no draft for a patient without a confirmed visit", async () => {
     const body = (await authed(request(app).post("/drafts/compose")).send({ janePatientId: "2002", previousNotes: [] }).expect(200)).body;
     expect(body.draft).toBeNull();

@@ -19,6 +19,8 @@ export const test = base.extend<Fixtures>({
     const context = await chromium.launchPersistentContext("", {
       channel: "chromium",
       headless: true,
+      // Browser on UTC, practice on Pacific: the mismatch G-26 fixed. Keeps it covered.
+      timezoneId: "UTC",
       ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
       args: [`--disable-extensions-except=${EXTENSION}`, `--load-extension=${EXTENSION}`],
     });

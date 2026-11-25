@@ -39,6 +39,10 @@ Then, in Chrome:
 | James Carter | Nothing changed since last week → clone warning |
 | Priya Shah | New complaint; only today's findings, nothing invented from her old mid-back note |
 
+## Your own patients file
+
+`DEMO_PATIENTS_FILE=/path/outside/repo/patients.json pnpm demo` replaces the three built-in patients with invented ones from a private file (format in [the session 1 kit](ux/sessions/session-1-kit.md)). Transcripts can be pasted as `Speaker: words` lines. Never commit such a file.
+
 ## End-to-end test
 
 ```bash

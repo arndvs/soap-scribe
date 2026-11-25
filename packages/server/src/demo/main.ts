@@ -1,5 +1,6 @@
 import express from "express";
 import { createHmac } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { localDate, systemClock } from "../clock.js";
 import { jsonLogger } from "../log.js";
 import { createMemoryRepos } from "../repos/memory.js";
@@ -9,7 +10,7 @@ import { noopNotifier } from "../notify/notifier.js";
 import { createDraftService } from "../services/drafts.js";
 import { createApp, sha256Hex } from "../api/app.js";
 import { Worker } from "../worker/worker.js";
-import { DEMO_PATIENTS, DEMO_PROTOCOLS, DEMO_TEMPLATE, appointmentWindow, previousNotesFor } from "./data.js";
+import { DEMO_PATIENTS as BUILT_IN, DEMO_PROTOCOLS, DEMO_TEMPLATE, appointmentWindow, parsePatientsFile, previousNotesFor } from "./data.js";
 import { DemoLlmClient } from "./llm.js";
 import { fakeJaneRouter, type FakeJaneState } from "./jane.js";
 
@@ -24,6 +25,11 @@ const TIME_ZONE = process.env.PRACTICE_TIMEZONE ?? "America/Los_Angeles";
 const TOKEN = process.env.DEMO_TOKEN ?? "demo-token-not-a-secret";
 const WEBHOOK_SECRET = "demo-webhook-secret";
 const MODEL = "demo";
+
+// Session 1: her role-played visits come from a private file outside the repo.
+const DEMO_PATIENTS = process.env.DEMO_PATIENTS_FILE
+  ? parsePatientsFile(readFileSync(process.env.DEMO_PATIENTS_FILE, "utf8"))
+  : BUILT_IN;
 
 const llm: LlmClient =
   process.env.DEMO_LLM === "bedrock" ? new BedrockLlmClient(process.env.AWS_REGION ?? "us-west-2") : new DemoLlmClient();

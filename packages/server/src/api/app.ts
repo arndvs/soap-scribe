@@ -85,11 +85,21 @@ export function createApp(d: AppDeps) {
 
   app.post("/appointments/sync", handle(async (req, res) => {
     const body = AppointmentSyncRequest.parse(req.body);
-    await d.repos.appointments.replaceDay(
-      body.date,
-      // Stable IDs: re-syncing the same schedule must not orphan a job's confirmed appointment.
-      body.appointments.map((a) => ({ ...a, id: appointmentId(body.date, a.janePatientId, a.start), date: body.date })),
-    );
+    // File each appointment under its practice-local date, computed here: the browser's
+    // own date can differ (a laptop in another time zone, or near midnight UTC). G-26.
+    const byDate = new Map<string, typeof body.appointments>();
+    for (const a of body.appointments) {
+      const date = localDate(new Date(a.start), d.timeZone);
+      byDate.set(date, [...(byDate.get(date) ?? []), a]);
+    }
+    if (byDate.size === 0) byDate.set(body.date, []);
+    for (const [date, list] of byDate) {
+      await d.repos.appointments.replaceDay(
+        date,
+        // Stable IDs: re-syncing the same schedule must not orphan a job's confirmed appointment.
+        list.map((a) => ({ ...a, id: appointmentId(date, a.janePatientId, a.start), date })),
+      );
+    }
     res.json({ ok: true, count: body.appointments.length });
   }));
 

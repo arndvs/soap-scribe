@@ -1,4 +1,5 @@
-import type { PreviousNote, ProtocolItem, Template, TranscriptSegment } from "../domain.js";
+import { z } from "zod";
+import { PreviousNote, type ProtocolItem, type Template, type TranscriptSegment } from "../domain.js";
 import { addMinutes, localDate } from "../clock.js";
 
 /**
@@ -156,4 +157,35 @@ export function previousNotesFor(p: DemoPatient, now: Date, timeZone: string): P
   return p.previous
     .map((n) => ({ date: localDate(addMinutes(now, -n.daysAgo * 24 * 60), timeZone), sections: n.sections }))
     .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+const PatientFile = z.array(
+  z.object({
+    janePatientId: z.string().regex(/^\d+$/),
+    name: z.string().min(1),
+    appointmentMinutesAgo: z.number().int().min(0),
+    previous: z.array(z.object({ daysAgo: z.number().int().positive(), sections: PreviousNote.shape.sections })),
+    /** Either structured segments, or pasted text with one "Speaker: words" line per segment. */
+    transcript: z.array(z.object({ speaker: z.string().optional(), text: z.string() })).optional(),
+    transcriptText: z.string().optional(),
+    assignments: z.array(z.object({ protocolId: z.string(), daysAgo: z.number().int().positive() })).optional(),
+  }),
+);
+
+/** Reads a private patients file for demo sessions (DEMO_PATIENTS_FILE). Never commit one. */
+export function parsePatientsFile(json: string): DemoPatient[] {
+  return PatientFile.parse(JSON.parse(json)).map(({ transcriptText, transcript, ...p }) => ({
+    ...p,
+    transcript:
+      transcript ??
+      (transcriptText ?? "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((l) => {
+          const m = l.match(/^([A-Za-z][\w .'-]{0,30}):\s*(.*)$/);
+          // "Recap:" starts her spoken recap; it's words, not a speaker.
+          return m && !/^recap$/i.test(m[1]!) ? { speaker: m[1]!, text: m[2]! } : { text: l };
+        }),
+  }));
 }
