@@ -27,6 +27,9 @@ Priority: **P1** blocks real-patient use. **P2** should land before the write-up
 | G-14 | Settings has an API but no editor UI. | Templates, glossary and protocols must be entered through the API for now. | Settings view: template and carry rules, examples, shorthand, protocol library, version history with restore, Preview on a synthetic visit. | Done |
 | G-15 | Failure alerts aren't wired to `ALERT_EMAIL`. | A failed job shows in the side panel but nobody is emailed. | SES email with job ID and error only. | Done |
 | G-16 | No deployment config yet. | Can't run on AWS. | Dockerfile, ECS task definitions, IAM policies, manual deploy workflow, [deploy.md](deploy.md). Not yet run against a real AWS account. | Done (untested on AWS) |
+| G-17 | Protocol lines in Plan carry no date. | She dates every clinical-advice line by hand today (Story 1); without it she can't see when a recommendation started (Story 3). | Print the assignment date on protocol sentences, e.g. "(given 2026-10-03)" for repeats and "(today)" for new ones; date format in Settings. | Open |
+| G-18 | Assignments are recorded but never shown, and compose doesn't read them. | Story 3 isn't met: she's still scrolling old notes to see what she's assigned. | Chart: "assigned before" strip with dates (sketch first, see `docs/ux/06-interface-design.md`); pass prior assignments to protocol matching so repeats are marked, not re-added. | Open |
+| G-23 | A visit with no recording is invisible: Today lists recordings, not appointments, and Chart can only say "no confirmed visit". | Story 2: she can't tell which notes are left; a forgotten recorder is a dead end. | Appointment-first Today list with a "no recording" state; a carry-forward-only draft from previous notes, all sentences tagged carried. | Open |
 
 ## P3
 
@@ -34,3 +37,6 @@ Priority: **P1** blocks real-patient use. **P2** should land before the write-up
 |---|---|---|---|---|
 | G-20 | Single-token auth. | Fine for one clinician; not for two. | Real login when D-31 is taken up. | Open |
 | G-21 | No in-browser recording. | The project doesn't exercise live capture. | D-30 stretch goal. | Open |
+| G-19 | A "today" sentence can't be traced to its transcript line in the UI. | Story 4: when she doubts a sentence she has no way to check it. | Keep `sourceSegments` on composed sentences; popover in Chart. | Open |
+| G-22 | Today says "open the patient's chart" but doesn't link to it. | Extra navigation per patient in a batch (Story 2). | Link to the Jane chart URL once the pattern is mapped with the selectors (G-06). | Open |
+| G-24 | Protocol items have no category or care phase. | A flat library won't scale past ~50 items; "ready to progress?" (Story 3) needs phases. | Add `category` and optional `phase` to `ProtocolItem`; group and filter in Settings and in G-18. | Open |
