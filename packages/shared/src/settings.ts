@@ -46,6 +46,11 @@ export const PracticeSettings = z.object({
   previousNotesToRead: z.number().int().min(0).max(5),
   /** Show the "almost identical to last note" reminder above this similarity (0..1). */
   cloneWarningThreshold: z.number().min(0).max(1),
+  /**
+   * How protocol lines in Plan are dated, the way she dates "clinical advice" by hand
+   * (gap G-17). Unset means "us" (11/24/26). Confirm her format in session 1.
+   */
+  planDateFormat: z.enum(["off", "us", "iso"]).optional(),
   updatedAt: z.string().datetime(),
 });
 export type PracticeSettings = z.infer<typeof PracticeSettings>;
@@ -60,6 +65,8 @@ export const ProtocolItem = z.object({
   category: ProtocolCategory,
   frequency: z.string().optional(),
   contraindications: z.string().optional(),
+  /** Care phase she uses it in, e.g. "Foundational", "Corrective" (gap G-24). */
+  phase: z.string().max(40).optional(),
   /** Other phrases she uses for this item, to help matching. */
   aliases: z.array(z.string()),
   active: z.boolean(),

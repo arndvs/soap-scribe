@@ -59,6 +59,17 @@ async function reset() {
     updatedAt: now.toISOString(),
   });
   for (const item of DEMO_PROTOCOLS) await repos.protocols.upsert(item);
+  for (const p of DEMO_PATIENTS) {
+    await repos.protocols.recordAssignments(
+      (p.assignments ?? []).map((a, i) => ({
+        id: `demo-assign-${p.janePatientId}-${i}`,
+        janePatientId: p.janePatientId,
+        protocolId: a.protocolId,
+        assignedOn: localDate(new Date(now.getTime() - a.daysAgo * 86_400_000), TIME_ZONE),
+        draftId: "demo-history",
+      })),
+    );
+  }
 }
 await reset();
 

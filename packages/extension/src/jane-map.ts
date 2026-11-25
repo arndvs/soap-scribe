@@ -20,6 +20,8 @@ export const janeMap = {
   },
   chartPage: {
     urlPattern: /\/patients\/(\d+)\/chart/,
+    /** Path of a patient's chart, for "Open chart" in Today. Must match urlPattern. */
+    path: (janePatientId: string) => `/patients/${encodeURIComponent(janePatientId)}/chart`,
     /** Element whose attribute repeats the patient ID; checked against the URL. */
     patientIdElement: "[data-soap-patient-id]",
     patientIdAttr: "data-soap-patient-id",

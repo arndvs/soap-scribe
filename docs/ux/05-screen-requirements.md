@@ -1,6 +1,6 @@
 # Step 5 — Screen requirements
 
-Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is written as **Inform → Engage → Invite**: **A.** what the user gets, **B.** what they can do, **C.** how they get to the next screen. The **Built** column checks each line against the code as of this commit: ✅ built, ◐ partly, ❌ missing (with its gap).
+Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is written as **Inform → Engage → Invite**: **A.** what the user gets, **B.** what they can do, **C.** how they get to the next screen. The **Built** column checks each line against the code (updated after the gap fixes): ✅ built, ◐ partly, ❌ missing (with its gap).
 
 ## Today
 
@@ -11,12 +11,12 @@ Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is writ
 |---|---|---|
 | A | One row per recording: time, status in plain words, suggested patient | ✅ `Today.tsx` |
 | A | Failed rows show the error | ✅ |
-| A | Visits on the schedule with no recording yet | ❌ G-23 |
+| A | Visits on the schedule with no recording yet, and "N of M notes inserted" | ✅ G-23 |
 | B | Sync today's schedule from the Jane schedule page | ✅ |
 | B | Confirm or change the patient from today's appointments | ✅ |
 | B | Retry a failed job | ✅ |
 | C | Ready rows say whose chart to open | ✅ (text only) |
-| C | One click from a ready row to that patient's chart in Jane | ❌ G-22 |
+| C | One click from a row to that patient's chart in Jane | ✅ G-22 (path unverified) |
 
 ## Chart — before a draft exists
 
@@ -28,7 +28,7 @@ Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is writ
 | A | Which patient the panel is reading (follows the active Jane tab) | ◐ reads the ID, doesn't show the name |
 | A | If there's no confirmed visit, say so and where to fix it | ✅ "Confirm the recording in Today" |
 | B | Draft today's note (reads up to N previous notes from the page) | ✅ |
-| B | Draft from previous notes only, when there's no recording | ❌ G-23 |
+| B | Draft from previous notes only, when there's no recording | ✅ G-23 |
 | C | Draft appears in place | ✅ |
 
 ## Chart — draft
@@ -41,9 +41,9 @@ Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is writ
 | A | S/O/A/P sections with each sentence styled by source: today, carried (with date), updated (with "was:"), protocol | ✅ |
 | A | Clone warning when similarity to the last note passes her threshold | ✅ |
 | A | Flags the model raised (missing info) | ✅ |
-| A | Protocols already assigned to this patient, with dates | ❌ G-18 |
-| A | The transcript line behind a "today" sentence | ❌ G-19 |
-| A | Date on each protocol line in Plan | ❌ G-17 |
+| A | Protocols already given to this patient, with dates, one-click re-add | ✅ G-18 |
+| A | The transcript line behind a "today" sentence ("What was said") | ✅ G-19 |
+| A | Date on each protocol line in Plan | ✅ G-17 |
 | B | Edit or delete any sentence; saved before insert | ✅ |
 | B | Copy one section | ✅ |
 | B | Insert into Jane: checks the page, checks the patient ID matches, fills all fields or none, reads back | ✅ (selectors are placeholders, G-06) |
@@ -62,7 +62,7 @@ Each screen in the [flow](03-flow-diagram.md) gets at most two goals and is writ
 | B | Edit and save (a template save creates a new version) | ✅ |
 | B | Restore an earlier version | ✅ |
 | B | Preview the template on a synthetic visit | ✅ `/settings/preview` |
-| B | Group or filter protocols by category | ❌ G-24 |
+| B | Group protocols by category, search, care phase | ✅ G-24 |
 | C | Back to Chart via the tab | ✅ |
 
 ## Options (one-time)

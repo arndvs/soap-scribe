@@ -68,6 +68,10 @@ flowchart TD
 | 7. Aaron, when something breaks | Worker retries 1/5/15 min → failed → alert email; Today: Retry; hourly reconcile | Yes | — |
 | 8. Proving the time saving | Off-system timing | **No** | Not measured yet (**G-13**). |
 
-## What this changes
+## Update after the gap fixes
+
+Stories 1–5 and 7 now reach their goal in the product (G-17, G-18, G-19, G-22, G-23 done). Story 6 (consent) and Story 8 (timing) remain off-system. The flow above gains: Today → **Open chart** → Chart, and Chart → **Draft from previous notes** when there's no recording.
+
+## What this changed
 
 Two stories don't reach their goal inside the product (3 and 6) and one has a hard dead end (2, missing recording). Those are now in [gaps.md](../gaps.md) as G-17, G-18, G-19, G-22 and G-23 with priorities, and in the [traceability matrix](traceability.md).

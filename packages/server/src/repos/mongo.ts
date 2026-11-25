@@ -85,6 +85,14 @@ export function createMongoRepos(db: Db): Repos {
         const created = res.lastErrorObject?.updatedExisting === false;
         return { job: fromDoc<Job>(res.value)!, created };
       },
+      async createWithoutRecording(job) {
+        const res = await jobs.findOneAndUpdate(
+          { pocketRecordingId: job.pocketRecordingId },
+          { $setOnInsert: toDoc(job) },
+          { upsert: true, returnDocument: "after" },
+        );
+        return fromDoc<Job>(res)!;
+      },
       async get(id) {
         return fromDoc<Job>(await jobs.findOne({ _id: id as never }));
       },

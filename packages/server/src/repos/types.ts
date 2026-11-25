@@ -22,6 +22,12 @@ export interface JobRepo {
   upsertByRecording(pocketRecordingId: string, now: Date): Promise<{ job: Job; created: boolean }>;
   get(id: string): Promise<Job | null>;
   /**
+   * Inserts a job that has no Pocket recording (the visit wasn't recorded), already in
+   * facts_ready, so the worker never claims it (gap G-23). The pocketRecordingId is a
+   * unique "none:" key, so asking twice for the same visit returns the same job.
+   */
+  createWithoutRecording(job: Job): Promise<Job>;
+  /**
    * Atomically claims the oldest job in one of `statuses` whose notBefore has passed,
    * moving it to `to` and leasing it until `leaseUntil` (stored in notBefore).
    * A worker that crashes simply lets the lease expire, and the job is claimed again.

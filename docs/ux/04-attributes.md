@@ -53,6 +53,10 @@ Every fact must cite at least one transcript segment; facts citing segments that
 | sentence.fromNoteDate | YYYY-MM-DD, required for carried/updated | Jane (previous note) | 4 |
 | sentence.previousText | string, for updated | Jane (previous note) | 4 |
 | sentence.protocolId | string, for protocol | system | 1, 3 |
+| sentence.assignedSince | YYYY-MM-DD, protocol given on an earlier visit | system | 3 (G-18) |
+| sentence.evidence | transcript lines, for today/updated | system (copied from transcript) | 4 (G-19) |
+| draft.priorAssignments | {protocolId, title, phase?, first/last date, times, inToday, planText}[] | system | 3 (G-18) |
+| draft.withoutRecording | boolean | user (chose it) | 2 (G-23) |
 | flags[] | {section, reason} | model | 1 |
 | similarityToLast | 0–1 trigram Jaccard | system | 4 |
 | templateId, templateVersion | string, int | system | 5 |
@@ -74,21 +78,25 @@ Every fact must cite at least one transcript segment; facts citing segments that
 | glossary[].term, meaning | string | user | 5 |
 | previousNotesToRead | 0–5 | user | 1 |
 | cloneWarningThreshold | 0–1 | user | 4 |
+| planDateFormat | us · iso · off | user | 1 (G-17) |
 
 ## Protocol item / assignment — `settings.ts`
 
 | Attribute | Type | Source | Story |
 |---|---|---|---|
-| protocol.title, instruction (verbatim), frequency?, contraindications?, aliases[], active | | user | 1, 5 |
+| protocol.title, instruction (verbatim), category (home exercise · daily living · nutrition · other), frequency?, contraindications?, aliases[], active | | user | 1, 5 |
+| protocol.phase? | string, e.g. Foundational | user | 3 (added for G-24) |
 | assignment.janePatientId, protocolId, assignedOn, draftId | | system (on insert) | 3 |
 
-## Implied by the stories, not modeled yet
+## Implied by the stories: status
+
+This table was the gap list; the build has since added most of it. **Correction:** an earlier version said protocol items had no category; `category` already existed. The gap was that nothing used it.
 
 | Attribute | On | Story | Why it matters | Gap |
 |---|---|---|---|---|
-| Date given, printed in the Plan text | Sentence (protocol) | 1, 3 | She dates every clinical-advice line by hand today; `assignedOn` exists but never reaches the note | G-17 |
-| Category (HEP subtype, ADL, nutrition…) | Protocol item | 3, 5 | Her library is organized by category in the Google Doc; a flat list won't scale past ~50 items | G-24 |
-| Care phase (Foundational, Corrective, …) and next-in-sequence | Protocol item / patient | 3 | "Is she ready to progress?" needs a phase to compare against | G-24 |
-| Source segment shown per "today" sentence | Sentence | 4 | Facts cite lines, but the composed sentence drops the link | G-19 |
+| Date given, printed in the Plan text | Sentence (protocol) | 1, 3 | She dates every clinical-advice line by hand today | G-17 ✅ |
+| Category used to group the library | Protocol item | 3, 5 | A flat list won't scale past ~50 items | G-24 ✅ |
+| Care phase (Foundational, Corrective, …) | Protocol item | 3 | Shown in "Given before"; next-in-sequence is not modeled | G-24 ✅ (label only) |
+| Transcript lines shown per "today" sentence | Sentence | 4 | | G-19 ✅ |
 | Consent recorded (date, by whom) | Patient / appointment | 6 | Needed before real-patient use; lives in Jane intake today | G-02 |
-| Expected visit with no recording | Appointment | 2 | Today lists jobs, not appointments, so a missing recording is invisible | G-23 |
+| Expected visit with no recording | Appointment | 2 | | G-23 ✅ |

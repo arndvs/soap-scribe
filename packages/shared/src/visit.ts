@@ -21,7 +21,14 @@ export const TranscriptSegment = z.object({
 export type TranscriptSegment = z.infer<typeof TranscriptSegment>;
 
 /** Every fact points at the transcript lines it came from. */
-const Sourced = { sourceSegments: z.array(z.number().int().nonnegative()).min(1) };
+const Sourced = {
+  sourceSegments: z.array(z.number().int().nonnegative()).min(1),
+  /**
+   * The cited transcript lines, copied in by code after extraction (never by the model),
+   * so the clinician can check a sentence against what was said. Deleted with the facts.
+   */
+  evidence: z.array(z.string()).optional(),
+};
 
 /** Stage 1 output: structured facts from today's visit only. */
 export const VisitFacts = z.object({

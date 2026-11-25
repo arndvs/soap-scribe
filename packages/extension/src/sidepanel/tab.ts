@@ -1,4 +1,5 @@
 import type { ContentRequest, ResponseFor } from "../messages.js";
+import { janeMap } from "../jane-map.js";
 
 /** Sends a message to the content script on the active tab. Returns null off Jane pages. */
 export async function askActiveTab<R extends ContentRequest>(msg: R): Promise<ResponseFor<R> | null> {
@@ -23,4 +24,15 @@ export function onActiveTabChange(fn: () => void): () => void {
     chrome.tabs.onActivated.removeListener(onActivated);
     chrome.tabs.onUpdated.removeListener(onUpdated);
   };
+}
+
+/**
+ * Opens a patient's chart in the Jane tab she's using (gap G-22), on the same Jane
+ * origin. The chart path is a placeholder in jane-map.ts until the day 2 mapping.
+ */
+export async function openChartInActiveTab(janePatientId: string): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !tab.url) throw new Error("Open Jane in this window first.");
+  const origin = new URL(tab.url).origin;
+  await chrome.tabs.update(tab.id, { url: `${origin}${janeMap.chartPage.path(janePatientId)}` });
 }

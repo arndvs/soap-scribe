@@ -12,7 +12,7 @@ import {
 } from "../domain.js";
 import type { LlmClient } from "../llm/client.js";
 import { completeValidated } from "../llm/json.js";
-import { protocolSentence, type ProtocolMatchResult } from "./protocols.js";
+import { datedProtocolSentence, type PlanDateFormat, type ProtocolMatchResult } from "./protocols.js";
 
 export const COMPOSE_SYSTEM = `You write a clinician's SOAP note for today's visit.
 
@@ -53,6 +53,10 @@ export interface ComposeInput {
   protocols: ProtocolMatchResult;
   /** Practice-local date of today's visit, YYYY-MM-DD. */
   visitDate: string;
+  /** How to date protocol lines; omitted means undated (gap G-17). */
+  planDateFormat?: PlanDateFormat;
+  /** protocolId → first date given to this patient, from earlier visits (gap G-18). */
+  firstAssignedOn?: ReadonlyMap<string, string>;
 }
 
 export function buildComposePrompt(input: ComposeInput): string {
@@ -129,8 +133,15 @@ export function enforceRules(out: ComposeOutput, input: ComposeInput): ComposedD
   }
 
   for (const m of input.protocols.matched) {
-    sections.plan.push({ text: protocolSentence(m.item), source: "protocol", protocolId: m.item.id });
+    const since = input.firstAssignedOn?.get(m.item.id);
+    sections.plan.push({
+      text: datedProtocolSentence(m.item, { format: input.planDateFormat ?? "off", givenOn: input.visitDate, since }),
+      source: "protocol",
+      protocolId: m.item.id,
+      ...(since ? { assignedSince: since } : {}),
+    });
   }
+  attachEvidence(sections, input.facts);
   for (const u of input.protocols.unmatched) {
     flags.push({ section: "plan", reason: `Recommendation not found in your library: "${u}"` });
   }
@@ -164,3 +175,37 @@ const dedupe = (flags: DraftFlag[]) => {
     return true;
   });
 };
+
+const words = (s: string) =>
+  new Set(s.toLowerCase().replace(/[^a-z0-9/ ]/g, " ").split(/\s+/).filter((w) => w.length > 1));
+
+/**
+ * Links each "today" or "updated" sentence to the visit facts it most resembles and
+ * copies their transcript lines onto it, so she can check it against what was said
+ * (gap G-19). Code, not the model, makes this link; a sentence with no clear match
+ * gets no evidence rather than a wrong one.
+ */
+export function attachEvidence(sections: DraftSections, facts: VisitFacts): void {
+  const all = [
+    ...facts.complaints,
+    ...facts.findings,
+    ...facts.treatments,
+    ...facts.painScores.map((p) => ({ ...p, text: `${p.region} ${p.score}/10` })),
+    ...facts.planItems,
+  ].filter((f) => f.evidence?.length);
+  if (all.length === 0) return;
+  for (const key of SOAP_SECTIONS) {
+    for (const s of sections[key]) {
+      if (s.source !== "today" && s.source !== "updated") continue;
+      const sw = words(s.text);
+      let best: { score: number; evidence: string[] } | undefined;
+      for (const f of all) {
+        const fw = words(f.text);
+        const hits = [...fw].filter((w) => sw.has(w)).length;
+        const score = hits / Math.max(1, Math.min(fw.size, sw.size));
+        if (score >= 0.5 && (!best || score > best.score)) best = { score, evidence: f.evidence! };
+      }
+      if (best) s.evidence = [...new Set(best.evidence)].slice(0, 6);
+    }
+  }
+}

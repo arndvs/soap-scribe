@@ -17,11 +17,15 @@ flowchart LR
 | 3 | [03-flow-diagram.md](03-flow-diagram.md) | Screen list, flow, every story traced, dead ends flagged | Done |
 | 4 | [04-attributes.md](04-attributes.md) | Attributes per entity with type and source; attributes the stories imply but the schema lacks | Done |
 | 5 | [05-screen-requirements.md](05-screen-requirements.md) | Goals and A/B/C per screen, each checked against the build | Done |
-| 6 | [06-interface-design.md](06-interface-design.md) | Patterns in the build; variations to sketch for the gaps | Sketches not done |
+| 6 | [06-interface-design.md](06-interface-design.md) | Patterns in the build; variations for the gaps; which were built | Leaning variations built; alternatives not sketched |
 | 7 | [07-test-plan.md](07-test-plan.md) | 12 scenarios with pass/fail, session plan, six-mistakes checklist | No sessions run yet |
-| — | [traceability.md](traceability.md) | Every need → code → automated test → UX test → status → gap | 10 met, 5 unproven live, 3 partly, 3 not met |
+| — | [traceability.md](traceability.md) | Every need → code → automated test → UX test → status → gap | 14 met, 5 unproven live, 2 not met (both off-system) |
 
-## What the audit found
+## What the audit found (and what's been fixed)
+
+**Update:** G-17, G-18, G-19, G-22, G-23 and G-24 are built and covered by tests; demo mode found and fixed G-25. Session 1 with Bonnie is the next step: [sessions/session-1-kit.md](sessions/session-1-kit.md).
+
+Originally:
 
 - **Story 3 (what she's already assigned, and when) isn't met.** It's the reason she copies dated lines from note to note today. The data is already recorded on insert but never shown or dated: G-17, G-18.
 - **A visit with no recording is a dead end** (Story 2): G-23.

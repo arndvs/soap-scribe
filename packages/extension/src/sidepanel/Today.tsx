@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import type { TodayResponse } from "@soap-scribe/shared";
+import type { Appointment, TodayItem, TodayResponse } from "@soap-scribe/shared";
 import { api } from "../api.js";
 import { localToday } from "../format.js";
-import { askActiveTab } from "./tab.js";
+import { askActiveTab, openChartInActiveTab } from "./tab.js";
+import { arrangeToday } from "./today-model.js";
 
 const STATUS_LABEL: Record<string, string> = {
   received: "Waiting for Pocket",
@@ -74,6 +75,22 @@ export function Today({ onError }: { onError: (m: string | null) => void }) {
 
   if (!data) return <p className="muted">Loading today…</p>;
 
+  const { rows, unmatched, done } = arrangeToday(data);
+  const openChart = (id: string) => void openChartInActiveTab(id).catch((e: Error) => onError(e.message));
+  const card = (item: TodayItem, appointment?: Appointment) => (
+    <JobCard
+      key={item.jobId}
+      item={item}
+      appointment={appointment}
+      appointments={data.appointments}
+      choice={picked[item.jobId] ?? item.confirmedAppointment?.id ?? item.suggestedAppointment?.id}
+      onPick={(v) => setPicked({ ...picked, [item.jobId]: v })}
+      onConfirm={confirm}
+      onRetry={retry}
+      onOpenChart={openChart}
+    />
+  );
+
   return (
     <section>
       <div className="row">
@@ -82,50 +99,105 @@ export function Today({ onError }: { onError: (m: string | null) => void }) {
           {busy ? "Syncing…" : "Sync schedule"}
         </button>
       </div>
-      {data.items.length === 0 && <p className="muted">No recordings yet today.</p>}
+      {rows.length > 0 && (
+        <p className="progress">
+          {done} of {rows.length} notes inserted
+        </p>
+      )}
+      {rows.length === 0 && data.items.length === 0 && <p className="muted">No recordings yet today. Open the schedule in Jane and sync.</p>}
       <ul className="list">
-        {data.items.map((item) => {
-          const time = item.recordedAt
-            ? new Date(item.recordedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-            : "—";
-          const choice = picked[item.jobId] ?? item.confirmedAppointment?.id ?? item.suggestedAppointment?.id;
-          const canConfirm = item.status === "needs_confirmation" || item.status === "facts_ready";
-          return (
-            <li key={item.jobId} className="card">
+        {rows.map(({ appointment, item }) =>
+          item ? (
+            card(item, appointment)
+          ) : (
+            <li key={appointment.id} className="card no-recording">
               <div className="row">
-                <strong>{time}</strong>
-                <span className={`badge ${item.status}`}>{STATUS_LABEL[item.status] ?? item.status}</span>
+                <strong>
+                  {timeOf(appointment.start)} · {appointment.patientDisplayName}
+                </strong>
+                <span className="badge">No recording</span>
               </div>
-              {canConfirm && (
-                <div className="row">
-                  <select value={choice ?? ""} onChange={(e) => setPicked({ ...picked, [item.jobId]: e.target.value })}>
-                    <option value="">Pick patient…</option>
-                    {data.appointments.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {new Date(a.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {a.patientDisplayName}
-                      </option>
-                    ))}
-                  </select>
-                  {item.status === "needs_confirmation" ? (
-                    <button onClick={() => confirm(item.jobId, choice)}>Confirm</button>
-                  ) : (
-                    choice !== item.confirmedAppointment?.id && <button onClick={() => confirm(item.jobId, choice)}>Change</button>
-                  )}
-                </div>
-              )}
-              {item.status === "facts_ready" && item.confirmedAppointment && (
-                <p className="muted">Open {item.confirmedAppointment.patientDisplayName}'s chart in Jane to draft the note.</p>
-              )}
-              {item.status === "failed" && (
-                <div className="row">
-                  <span className="error">{item.lastError}</span>
-                  <button onClick={() => retry(item.jobId)}>Retry</button>
-                </div>
-              )}
+              <p className="muted">
+                Still recording, or the recorder was off? If it wasn't recorded, open the chart and draft from previous notes.
+              </p>
+              <button className="link" onClick={() => openChart(appointment.janePatientId)}>Open chart</button>
             </li>
-          );
-        })}
+          ),
+        )}
       </ul>
+      {unmatched.length > 0 && (
+        <>
+          <h3>Recordings to match</h3>
+          <ul className="list">{unmatched.map((item) => card(item))}</ul>
+        </>
+      )}
     </section>
+  );
+}
+
+const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+function JobCard({
+  item,
+  appointment,
+  appointments,
+  choice,
+  onPick,
+  onConfirm,
+  onRetry,
+  onOpenChart,
+}: {
+  item: TodayItem;
+  appointment?: Appointment;
+  appointments: Appointment[];
+  choice: string | undefined;
+  onPick: (appointmentId: string) => void;
+  onConfirm: (jobId: string, appointmentId: string | undefined) => void;
+  onRetry: (jobId: string) => void;
+  onOpenChart: (janePatientId: string) => void;
+}) {
+  const canConfirm = item.status === "needs_confirmation" || item.status === "facts_ready";
+  const heading = item.confirmedAppointment
+    ? `${timeOf(item.confirmedAppointment.start)} · ${item.confirmedAppointment.patientDisplayName}`
+    : appointment
+      ? `${timeOf(appointment.start)} · ${appointment.patientDisplayName}?`
+      : `Recorded ${item.recordedAt ? timeOf(item.recordedAt) : "—"}`;
+  return (
+    <li className="card">
+      <div className="row">
+        <strong>{heading}</strong>
+        <span className={`badge ${item.status}`}>{STATUS_LABEL[item.status] ?? item.status}</span>
+      </div>
+      {item.recordedAt && <p className="muted">Recording from {timeOf(item.recordedAt)}</p>}
+      {canConfirm && (
+        <div className="row">
+          <select value={choice ?? ""} onChange={(e) => onPick(e.target.value)} aria-label="Patient for this recording">
+            <option value="">Pick patient…</option>
+            {appointments.map((a) => (
+              <option key={a.id} value={a.id}>
+                {timeOf(a.start)} · {a.patientDisplayName}
+              </option>
+            ))}
+          </select>
+          {item.status === "needs_confirmation" ? (
+            <button onClick={() => onConfirm(item.jobId, choice)}>Confirm</button>
+          ) : (
+            choice !== item.confirmedAppointment?.id && <button onClick={() => onConfirm(item.jobId, choice)}>Change</button>
+          )}
+        </div>
+      )}
+      {item.status === "facts_ready" && item.confirmedAppointment && (
+        <div className="row">
+          <span className="muted">Open {item.confirmedAppointment.patientDisplayName}'s chart in Jane to draft the note.</span>
+          <button className="link" onClick={() => onOpenChart(item.confirmedAppointment!.janePatientId)}>Open chart</button>
+        </div>
+      )}
+      {item.status === "failed" && (
+        <div className="row">
+          <span className="error">{item.lastError}</span>
+          <button onClick={() => onRetry(item.jobId)}>Retry</button>
+        </div>
+      )}
+    </li>
   );
 }

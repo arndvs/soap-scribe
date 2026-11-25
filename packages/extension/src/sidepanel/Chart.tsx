@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { SOAP_SECTIONS, type Draft, type DraftSentence, type PracticeSettings, type SoapSection } from "@soap-scribe/shared";
+import { SOAP_SECTIONS, type Draft, type DraftSentence, type PracticeSettings, type PriorAssignment, type SoapSection } from "@soap-scribe/shared";
 import { api } from "../api.js";
 import { draftToText } from "../format.js";
 import { askActiveTab, onActiveTabChange } from "./tab.js";
@@ -45,7 +45,7 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
     return onActiveTabChange(() => void load());
   }, [load]);
 
-  const compose = async () => {
+  const compose = async (withoutRecording = false) => {
     if (!patientId) return;
     setState("composing");
     try {
@@ -54,8 +54,11 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
         janePatientId: patientId,
         previousNotes: chart?.previousNotes ?? [],
         previousNotesUnavailable: !chart?.previousNotes,
+        withoutRecording,
       });
-      if (!res.draft) setNotice("No confirmed visit for this patient yet. Confirm the recording in Today.");
+      if (!res.draft) {
+        setNotice("No confirmed visit for this patient yet. Confirm the recording in Today, or draft from previous notes if the visit wasn't recorded.");
+      }
       setDraft(res.draft);
       onError(null);
     } catch (e) {
@@ -70,6 +73,15 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
     const next = structuredClone(draft);
     if (text === null) next.sections[key].splice(i, 1);
     else next.sections[key][i] = { ...next.sections[key][i]!, text };
+    setDraft(next);
+    setDirty(true);
+  };
+
+  /** One click puts an earlier recommendation back in today's Plan, dated "since" (G-18). */
+  const addPrior = (p: PriorAssignment) => {
+    if (!draft) return;
+    const next = structuredClone(draft);
+    next.sections.plan.push({ text: p.planText, source: "protocol", protocolId: p.protocolId, assignedSince: p.firstAssignedOn });
     setDraft(next);
     setDirty(true);
   };
@@ -110,9 +122,14 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
     return (
       <section>
         {notice && <p className="notice">{notice}</p>}
-        <button className="primary" onClick={compose} disabled={state === "composing"}>
+        <button className="primary" onClick={() => void compose()} disabled={state === "composing"}>
           {state === "composing" ? "Drafting…" : "Draft today's note"}
         </button>
+        <p>
+          <button className="link" onClick={() => void compose(true)} disabled={state === "composing"}>
+            Visit wasn't recorded? Draft from previous notes
+          </button>
+        </p>
       </section>
     );
   }
@@ -141,6 +158,9 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
             <h3>{LABEL[key]}</h3>
             <button className="link" onClick={() => copy(key)}>Copy</button>
           </div>
+          {key === "plan" && draft.priorAssignments && (
+            <PriorStrip items={draft.priorAssignments} inPlan={new Set(draft.sections.plan.flatMap((s) => (s.protocolId ? [s.protocolId] : [])))} onAdd={addPrior} />
+          )}
           {draft.sections[key].length === 0 && <p className="muted">Empty</p>}
           {draft.sections[key].map((s, i) => (
             <Sentence key={i} s={s} onChange={(t) => edit(key, i, t)} onRemove={() => edit(key, i, null)} />
@@ -152,7 +172,7 @@ export function Chart({ onError }: { onError: (m: string | null) => void }) {
         <button className="primary" onClick={insert} disabled={state === "inserting"}>
           {state === "inserting" ? "Inserting…" : "Insert into Jane"}
         </button>
-        <button className="link" onClick={compose}>Redraft</button>
+        <button className="link" onClick={() => void compose(Boolean(draft.withoutRecording))}>Redraft</button>
       </div>
     </section>
   );
@@ -165,7 +185,9 @@ function Sentence({ s, onChange, onRemove }: { s: DraftSentence; onChange: (t: s
       : s.source === "updated"
         ? `updated from ${s.fromNoteDate}`
         : s.source === "protocol"
-          ? "library"
+          ? s.assignedSince
+            ? "library · given before"
+            : "library · new today"
           : null;
   return (
     <div className={`sentence ${s.source}`} title={s.source === "updated" ? `Was: ${s.previousText}` : undefined}>
@@ -175,10 +197,65 @@ function Sentence({ s, onChange, onRemove }: { s: DraftSentence; onChange: (t: s
         readOnly={s.source === "protocol"}
         onChange={(e) => onChange(e.target.value)}
       />
+      {s.evidence && s.evidence.length > 0 && (
+        <details className="evidence">
+          <summary>What was said</summary>
+          <ul>
+            {s.evidence.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </details>
+      )}
       <div className="meta">
         {chip && <span className="chip">{chip}</span>}
         <button className="link" onClick={onRemove} aria-label="Remove line">Remove</button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Everything this patient was given on earlier visits, with dates (gap G-18): the
+ * summary she builds today by scrolling back through old notes in Jane.
+ */
+function PriorStrip({
+  items,
+  inPlan,
+  onAdd,
+}: {
+  items: PriorAssignment[];
+  inPlan: Set<string>;
+  onAdd: (p: PriorAssignment) => void;
+}) {
+  const fmt = (d: string) => {
+    const [y, m, day] = d.split("-");
+    return `${Number(m)}/${Number(day)}/${y!.slice(2)}`;
+  };
+  return (
+    <details className="prior" open={items.length <= 4}>
+      <summary>
+        Given before ({items.length}): {items.map((p) => p.title).join(", ")}
+      </summary>
+      <ul>
+        {items.map((p) => (
+          <li key={p.protocolId} className="row">
+            <span>
+              <strong>{p.title}</strong>
+              {p.phase && <span className="muted"> · {p.phase}</span>}
+              <span className="muted">
+                {" "}· since {fmt(p.firstAssignedOn)}
+                {p.timesAssigned > 1 ? `, ${p.timesAssigned} visits, last ${fmt(p.lastAssignedOn)}` : ""}
+              </span>
+            </span>
+            {inPlan.has(p.protocolId) ? (
+              <span className="chip">in today's Plan</span>
+            ) : (
+              <button className="link" onClick={() => onAdd(p)}>Add to Plan</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }

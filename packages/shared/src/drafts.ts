@@ -18,6 +18,10 @@ export const DraftSentence = z
     previousText: z.string().optional(),
     /** For protocol: the library item inserted verbatim. */
     protocolId: z.string().optional(),
+    /** For protocol: first date she gave this item to this patient, when given before. */
+    assignedSince: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    /** For today/updated: the transcript lines the sentence rests on. */
+    evidence: z.array(z.string()).max(6).optional(),
   })
   .superRefine((s, ctx) => {
     if ((s.source === "carried" || s.source === "updated") && !s.fromNoteDate) {
@@ -55,6 +59,21 @@ export type ComposeOutput = z.infer<typeof ComposeOutput>;
 
 export const DraftStatus = z.enum(["draft_ready", "inserted"]);
 
+/** A library item given to this patient on an earlier visit (shown beside the draft). */
+export const PriorAssignment = z.object({
+  protocolId: z.string(),
+  title: z.string(),
+  phase: z.string().optional(),
+  firstAssignedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  lastAssignedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  timesAssigned: z.number().int().positive(),
+  /** True when today's draft already has it in Plan. */
+  inToday: z.boolean(),
+  /** The Plan line to add with one click: her library wording plus the "since" date. */
+  planText: z.string(),
+});
+export type PriorAssignment = z.infer<typeof PriorAssignment>;
+
 export const Draft = z.object({
   id: z.string(),
   jobId: z.string(),
@@ -65,6 +84,10 @@ export const Draft = z.object({
   flags: z.array(DraftFlag),
   /** Similarity to the previous note (0..1), for the clone reminder. */
   similarityToLast: z.number().min(0).max(1).optional(),
+  /** Everything given before, oldest first (gap G-18). */
+  priorAssignments: z.array(PriorAssignment).optional(),
+  /** Drafted from previous notes only: no recording existed for the visit (gap G-23). */
+  withoutRecording: z.boolean().optional(),
   status: DraftStatus,
   createdAt: z.string().datetime(),
   insertedAt: z.string().datetime().optional(),

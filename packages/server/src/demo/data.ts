@@ -15,6 +15,8 @@ export interface DemoPatient {
   /** Previous notes, by how many days ago they were written. */
   previous: Array<{ daysAgo: number; sections: PreviousNote["sections"] }>;
   transcript: Array<Omit<TranscriptSegment, "index">>;
+  /** Library items given on earlier visits, by how many days ago (feeds "Given before"). */
+  assignments?: Array<{ protocolId: string; daysAgo: number }>;
 }
 
 const C = "Clinician";
@@ -41,9 +43,13 @@ export const DEMO_PATIENTS: DemoPatient[] = [
           subjective: "Low back 5/10, worse at night. 31 weeks pregnant.",
           objective: "L5 left posterior. Right SI fixation. Lumbar flexion limited.",
           assessment: "Lumbar segmental dysfunction, pregnancy related, improving.",
-          plan: "Weekly visits.",
+          plan: "Weekly visits.\nUse a lumbar pillow when sitting for more than 20 minutes",
         },
       },
+    ],
+    assignments: [
+      { protocolId: "cat-cow", daysAgo: 14 },
+      { protocolId: "lumbar-pillow", daysAgo: 7 },
     ],
     transcript: [
       { speaker: C, text: "How has your low back been this week?" },

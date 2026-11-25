@@ -49,13 +49,23 @@ export async function extractVisitFacts(
   // Drop any fact that cites a line that doesn't exist: it cannot be traced back.
   const max = transcript.length - 1;
   const valid = (f: { sourceSegments: number[] }) => f.sourceSegments.every((i) => i <= max);
+  // Copy the cited lines in, from the transcript itself: the model never writes evidence.
+  const byIndex = new Map(transcript.map((s) => [s.index, s]));
+  const cite = <F extends { sourceSegments: number[] }>(f: F): F => ({
+    ...f,
+    evidence: f.sourceSegments.flatMap((i) => {
+      const seg = byIndex.get(i);
+      return seg ? [`${seg.speaker ? `${seg.speaker}: ` : ""}${seg.text}`] : [];
+    }),
+  });
+  const keep = <F extends { sourceSegments: number[] }>(list: F[]) => list.filter(valid).map(cite);
   return {
     ...facts,
-    complaints: facts.complaints.filter(valid),
-    findings: facts.findings.filter(valid),
-    treatments: facts.treatments.filter(valid),
-    painScores: facts.painScores.filter(valid),
-    recommendationMentions: facts.recommendationMentions.filter(valid),
-    planItems: facts.planItems.filter(valid),
+    complaints: keep(facts.complaints),
+    findings: keep(facts.findings),
+    treatments: keep(facts.treatments),
+    painScores: keep(facts.painScores),
+    recommendationMentions: keep(facts.recommendationMentions),
+    planItems: keep(facts.planItems),
   };
 }

@@ -63,7 +63,10 @@ describe("Worker", () => {
     llm.push(JSON.stringify(facts));
     await worker.extract();
     expect((await repos.jobs.get(job.id))?.status).toBe("facts_ready");
-    expect(await repos.facts.get(job.id)).toEqual(facts);
+    const saved = await repos.facts.get(job.id);
+    expect(saved).toMatchObject(facts);
+    // Evidence is copied from the transcript by code (G-19), not written by the model.
+    expect(saved!.complaints[0]!.evidence).toEqual([`${transcript[1]!.speaker}: ${transcript[1]!.text}`]);
   });
 
   it("waits and retries when the transcript isn't ready, then fails visibly", async () => {

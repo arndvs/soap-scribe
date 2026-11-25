@@ -132,6 +132,72 @@ describe("API", () => {
     expect(after.confirmedAppointment?.janePatientId).toBe("1001");
   });
 
+  async function visit(day: string, recId: string) {
+    // One recorded visit for patient 1001 on `day`, confirmed and extracted.
+    const at = `${day}T18:31:00.000Z`;
+    pocket.recordings.set(recId, { id: recId, startedAt: at, transcript });
+    await authed(request(app).post("/appointments/sync")).send({
+      date: day,
+      appointments: [{ start: `${day}T18:30:00.000Z`, end: `${day}T18:45:00.000Z`, janePatientId: "1001", patientDisplayName: "Test Patient A" }],
+    }).expect(200);
+    await webhook(transcribed(recId)).expect(200);
+    await worker.fetchAndMatch();
+    const job = (await repos.jobs.listSince(new Date(0))).find((j) => j.pocketRecordingId === recId)!;
+    const appt = (await repos.appointments.listDay(day))[0]!;
+    await authed(request(app).post(`/jobs/${job.id}/confirm`)).send({ appointmentId: appt.id }).expect(200);
+    llm.push(JSON.stringify(facts));
+    await worker.extract();
+    llm.push(JSON.stringify(composeOutput));
+    return (await authed(request(app).post("/drafts/compose")).send({ janePatientId: "1001", previousNotes: [previousNote] }).expect(200)).body.draft;
+  }
+
+  it("dates Plan lines and shows what was given on earlier visits (G-17, G-18)", async () => {
+    const first = await visit("2026-12-01", "rec-1");
+    const firstPlan = first.sections.plan.filter((s: { source: string }) => s.source === "protocol");
+    expect(firstPlan.map((s: { text: string }) => s.text)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/— given 12\/1\/26$/)]),
+    );
+    expect(first.priorAssignments).toBeUndefined();
+    await authed(request(app).post(`/drafts/${first.id}/inserted`)).send({ janePatientIdOnPage: "1001", readBackMatched: true }).expect(200);
+
+    // A week later the same two items are said again: now they're repeats, dated from the first visit.
+    const second = await visit("2026-12-08", "rec-2");
+    const catCow = second.sections.plan.find((s: { protocolId?: string }) => s.protocolId === "cat-cow");
+    expect(catCow.text).toMatch(/— since 12\/1\/26$/);
+    expect(second.priorAssignments).toEqual([
+      expect.objectContaining({ protocolId: "cat-cow", firstAssignedOn: "2026-12-01", timesAssigned: 1, inToday: true }),
+      expect.objectContaining({ protocolId: "wedge", firstAssignedOn: "2026-12-01", inToday: true }),
+    ]);
+  });
+
+  it("drafts from previous notes only when the visit wasn't recorded (G-23)", async () => {
+    const carriedOnly = {
+      sections: {
+        subjective: [{ text: "Low back 5/10, worse after lifting.", source: "carried", fromNoteDate: "2026-11-24" }],
+        objective: [{ text: "L5 left posterior.", source: "carried", fromNoteDate: "2026-11-24" }],
+        assessment: [{ text: "Lumbar segmental dysfunction, improving.", source: "carried", fromNoteDate: "2026-11-24" }],
+        plan: [{ text: "Continue weekly.", source: "carried", fromNoteDate: "2026-11-24" }],
+      },
+      flags: [],
+    };
+    // Without the flag there's nothing to draft from.
+    expect((await authed(request(app).post("/drafts/compose")).send({ janePatientId: "2002", previousNotes: [previousNote] }).expect(200)).body.draft).toBeNull();
+    // With no previous note either, it refuses rather than producing an empty note.
+    await authed(request(app).post("/drafts/compose")).send({ janePatientId: "2002", previousNotes: [], withoutRecording: true }).expect(409);
+
+    llm.push(JSON.stringify(carriedOnly));
+    const draft = (await authed(request(app).post("/drafts/compose"))
+      .send({ janePatientId: "2002", previousNotes: [previousNote], withoutRecording: true })
+      .expect(200)).body.draft;
+    expect(draft.withoutRecording).toBe(true);
+    expect(draft.flags[0].reason).toMatch(/^No recording for this visit: everything here is carried from 2026-11-24/);
+    expect(draft.flags.some((f: { reason: string }) => f.reason.startsWith("No spoken recap"))).toBe(false);
+    expect(llm.requests.at(-1)!.user).toContain('"findings": []');
+
+    await authed(request(app).post(`/drafts/${draft.id}/inserted`)).send({ janePatientIdOnPage: "2002", readBackMatched: true }).expect(200);
+    expect((await repos.jobs.get(draft.jobId))?.status).toBe("inserted");
+  });
+
   it("returns no draft for a patient without a confirmed visit", async () => {
     const body = (await authed(request(app).post("/drafts/compose")).send({ janePatientId: "2002", previousNotes: [] }).expect(200)).body;
     expect(body.draft).toBeNull();

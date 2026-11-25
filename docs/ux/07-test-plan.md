@@ -21,18 +21,22 @@ Each scenario names the story and needs it tests ([traceability](traceability.md
 |---|---|---|---|---|
 | T-01 | 1 / N-01, N-02 | Role-play a returning-patient visit with Aaron; open the chart; draft | Draft covers every finding she said aloud; no invented findings (eval scorer: zero invented spinal levels) | Any invented finding, or she says "I'd rather start blank" |
 | T-02 | 1, 4 / N-03 | "Point to what's new today" | She finds the new findings in under 10 seconds using the styling | She has to read every sentence |
-| T-03 | 1 / N-04, N-05 | Visit where she gives two home exercises | Both appear in Plan with her exact library wording | Paraphrased wording; or she adds the date by hand (expected fail until G-17) |
+| T-03 | 1 / N-04, N-05 | Visit where she gives two home exercises | Both appear in Plan with her exact library wording | Paraphrased wording; or she rewrites the date by hand (means the format is wrong) |
 | T-04 | 4 / N-09 | Visit where nothing changed | Clone warning appears; she understands what it means without explanation | No warning, or she ignores/misreads it |
 | T-05 | 1 / N-07 | Insert into a test patient's chart in Jane | All fields filled, read-back matches, she only has to save and sign | Any field missing or wrong, or she has to re-paste |
 | T-06 | 1 / N-07 | Open patient A's draft, then switch Jane to patient B's chart, press Insert | Nothing inserted; clear error | Anything written into B's chart |
 | T-07 | 2 / N-10, N-11 | Three role-played recordings, then "chart these" | She confirms all three patients correctly from Today without help | Wrong patient confirmed, or she can't tell which recording is which |
-| T-08 | 2 / N-11 | One appointment with no recording | She notices it's missing from Today | She doesn't notice (expected fail until G-23) |
+| T-08 | 2 / N-11 | One appointment with no recording | She notices it's missing from Today | She doesn't notice |
 | T-09 | 5 / N-12, N-13 | "Add a new home exercise and change how Assessment is worded; check it before using it" | Done in Settings with Preview, no help from Aaron | She asks Aaron, or skips Preview because she can't find it |
 | T-10 | 8 / N-21 | A real charting day, before and after | Measured minutes per note drop; she keeps using it the following week | No drop, or she stops using it |
-| T-11 | 3 / N-06 | "What have you already given this patient?" | She answers from the panel | She opens old notes in Jane (expected fail until G-18) |
+| T-11 | 3 / N-06 | "What have you already given this patient?" | She answers from the panel | She opens old notes in Jane |
 | T-12 | 7 / N-16, N-17 | Aaron breaks the Pocket key on staging | Alert email within ~25 min with job ID only; Retry works after the fix | No email, or email contains patient data |
 
 T-01 to T-04 use synthetic or role-played visits only, until the BAAs in G-01 are done.
+
+## Automated coverage
+
+`pnpm test:e2e` ([demo.md](../demo.md)) runs the mechanical half of T-01, T-03, T-04, T-05, T-06, T-08 and T-11 on fake Jane with a stand-in model, in CI. It proves the flow and the safety checks work; it can't tell whether Bonnie trusts the draft, finds things fast, or likes the date format. Those are what the sessions below are for.
 
 ## Running sessions without the six mistakes
 

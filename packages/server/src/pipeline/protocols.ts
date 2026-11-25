@@ -60,3 +60,27 @@ export function protocolSentence(item: ProtocolItem): string {
   const base = item.instruction.trim();
   return item.frequency ? `${base} (${item.frequency})` : base;
 }
+
+export type PlanDateFormat = "off" | "us" | "iso";
+
+/** "2026-11-24" → "11/24/26" (us) or unchanged (iso). */
+export function formatPlanDate(isoDate: string, format: Exclude<PlanDateFormat, "off">): string {
+  if (format === "iso") return isoDate;
+  const [y, m, d] = isoDate.split("-");
+  return `${Number(m)}/${Number(d)}/${y!.slice(2)}`;
+}
+
+/**
+ * The Plan line with the date she would add by hand (gap G-17): "given" the first time,
+ * "since" when this patient already had it. Her library wording itself is never changed.
+ */
+export function datedProtocolSentence(
+  item: ProtocolItem,
+  opts: { format: PlanDateFormat; givenOn: string; since?: string },
+): string {
+  const base = protocolSentence(item);
+  if (opts.format === "off") return base;
+  return opts.since
+    ? `${base} — since ${formatPlanDate(opts.since, opts.format)}`
+    : `${base} — given ${formatPlanDate(opts.givenOn, opts.format)}`;
+}

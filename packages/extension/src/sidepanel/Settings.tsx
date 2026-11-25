@@ -245,6 +245,12 @@ function ShorthandEditor({
         <option value={0.95}>95%</option>
         <option value={1}>Only when identical</option>
       </select>
+      <label>Date the recommendations in Plan</label>
+      <select value={settings.planDateFormat ?? "us"} onChange={(e) => onChange({ ...settings, planDateFormat: e.target.value as NonNullable<PracticeSettings["planDateFormat"]> })}>
+        <option value="us">Yes: "— given 11/24/26", or "— since" if given before</option>
+        <option value="iso">Yes: "— given 2026-11-24"</option>
+        <option value="off">No dates</option>
+      </select>
       <div className="row sticky">
         <button className="primary" onClick={() => void onSave()} disabled={settings.glossary.some((g) => !g.term || !g.meaning)}>Save</button>
       </div>
@@ -264,6 +270,7 @@ const blankProtocol = (): ProtocolItem => ({
 function ProtocolEditor({ onError }: { onError: (m: string | null) => void }) {
   const [items, setItems] = useState<ProtocolItem[] | null>(null);
   const [editing, setEditing] = useState<ProtocolItem | null>(null);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -300,6 +307,8 @@ function ProtocolEditor({ onError }: { onError: (m: string | null) => void }) {
           <option value="nutrition">Nutrition</option>
           <option value="other">Other</option>
         </select>
+        <label>Care phase (optional)</label>
+        <input value={editing.phase ?? ""} placeholder="Foundational" onChange={(e) => set({ phase: e.target.value || undefined })} />
         <label>Frequency</label>
         <input value={editing.frequency ?? ""} placeholder="2x/day" onChange={(e) => set({ frequency: e.target.value || undefined })} />
         <label>Contraindications</label>
@@ -320,21 +329,45 @@ function ProtocolEditor({ onError }: { onError: (m: string | null) => void }) {
     <div>
       <button className="primary" onClick={() => setEditing(blankProtocol())}>Add protocol</button>
       {items.length === 0 && <p className="muted">No protocols yet. Add the recommendations you usually paste from your Google Doc.</p>}
-      <ul className="list">
-        {items.map((p) => (
-          <li key={p.id} className="card">
-            <div className="row">
-              <strong>{p.title}</strong>
-              <span className="muted">{p.active ? p.frequency ?? "" : "not in use"}</span>
-            </div>
-            <p className="muted">{p.instruction}</p>
-            <button className="link" onClick={() => setEditing(p)}>Edit</button>
-          </li>
-        ))}
-      </ul>
+      {items.length > 8 && (
+        <input type="search" placeholder="Find a protocol" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Find a protocol" />
+      )}
+      {CATEGORIES.map(([cat, label]) => {
+        const group = items.filter((p) => p.category === cat && matches(p, query));
+        if (group.length === 0) return null;
+        return (
+          <section key={cat}>
+            <h3>{label} <span className="muted">({group.length})</span></h3>
+            <ul className="list">
+              {group.map((p) => (
+                <li key={p.id} className="card">
+                  <div className="row">
+                    <strong>{p.title}</strong>
+                    <span className="muted">{p.active ? [p.phase, p.frequency].filter(Boolean).join(" · ") : "not in use"}</span>
+                  </div>
+                  <p className="muted">{p.instruction}</p>
+                  <button className="link" onClick={() => setEditing(p)}>Edit</button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </div>
   );
 }
+
+const CATEGORIES: Array<[ProtocolItem["category"], string]> = [
+  ["home_exercise", "Home exercises"],
+  ["daily_living", "Daily living"],
+  ["nutrition", "Nutrition"],
+  ["other", "Other"],
+];
+
+const matches = (p: ProtocolItem, q: string) => {
+  const t = q.trim().toLowerCase();
+  return !t || [p.title, p.instruction, p.phase ?? "", ...p.aliases].some((x) => x.toLowerCase().includes(t));
+};
 
 function History({
   templateId,

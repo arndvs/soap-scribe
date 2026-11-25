@@ -41,8 +41,22 @@ Lean: 1, because it answers Story 2's real question ("which notes are left?").
 1. Hover or tap a "today" sentence → popover with the cited transcript line(s) and time.
 2. A "Show sources" toggle that lists citations under each section.
 
+## What was built (v0.2)
+
+The leaning variation for each was built so it can be tested; the others stay on the list for session 2.
+
+| Gap | Built | Still to compare in session 2 |
+|---|---|---|
+| G-18 | Strip above Plan ("Given before"), open when ≤ 4 items, plus "— since" dates inline (variations 1 + 2) | 3 (History tab) |
+| G-23 | Appointment-first Today (variation 1) | — |
+| G-22 | "Open chart" link on each row (variation 1) | 2 ("Next" button) |
+| G-19 | "What was said" disclosure under the sentence (closest to variation 2, per sentence) | 1 (hover popover) |
+
+Screenshots: run `pnpm demo` ([demo.md](../demo.md)).
+
 ## Checklist
 
 - [x] Patterns recorded for every built screen
-- [ ] 1-minute sketches for the four variations above
+- [x] Leaning variations built for G-17/18/19/22/23
+- [ ] 1-minute sketches of the alternatives, for session 2
 - [ ] Bonnie picks between variations (Step 7, session 2)

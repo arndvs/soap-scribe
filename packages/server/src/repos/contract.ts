@@ -42,6 +42,23 @@ export function repoContract(name: string, make: () => Promise<Repos>) {
       expect(moved?.durationSeconds).toBe(900);
     });
 
+    it("creates a job for an unrecorded visit once, ready to draft, and the worker never claims it", async () => {
+      const job = {
+        id: "j-none",
+        pocketRecordingId: "none:1001:2026-12-01",
+        status: "facts_ready" as const,
+        janePatientId: "1001",
+        attempts: 0,
+        createdAt: t0.toISOString(),
+        updatedAt: t0.toISOString(),
+      };
+      const a = await r.jobs.createWithoutRecording(job);
+      const b = await r.jobs.createWithoutRecording({ ...job, id: "j-other" });
+      expect(b.id).toBe(a.id);
+      expect((await r.jobs.findReadyForPatient("1001"))?.id).toBe(a.id);
+      expect(await r.jobs.claimNext(["received", "confirmed", "extracting"], "extracting", later(1), later(20))).toBeNull();
+    });
+
     it("finds the facts-ready job for a patient", async () => {
       const { job } = await r.jobs.upsertByRecording("rec-4", t0);
       await r.jobs.transition(job.id, "received", "facts_ready", { janePatientId: "p-1" }, t0);

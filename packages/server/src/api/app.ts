@@ -151,7 +151,7 @@ export function createApp(d: AppDeps) {
 
   app.post("/drafts/compose", handle(async (req, res) => {
     const body = ComposeRequest.parse(req.body);
-    const draft = await d.drafts.compose(body.janePatientId, body.previousNotes, body.previousNotesUnavailable);
+    const draft = await d.drafts.compose(body.janePatientId, body.previousNotes, body.previousNotesUnavailable, body.withoutRecording);
     res.json({ draft });
   }));
 

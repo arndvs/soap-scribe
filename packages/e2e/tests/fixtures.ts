@@ -66,7 +66,7 @@ export async function finishRecording(janePatientId: string) {
 /** Today tab: sync the schedule and confirm the suggested patient for each recording. */
 export async function syncAndConfirm(panel: Page, jane: Page, names: string[]) {
   await jane.goto(`${JANE}/admin/schedule`);
-  await panel.getByRole("button", { name: "Today" }).click();
+  await panel.getByRole("button", { name: "Today", exact: true }).click();
   await panel.getByRole("button", { name: "Sync schedule" }).click();
   for (const name of names) {
     const card = panel.locator("li.card", { has: panel.locator("option:checked", { hasText: name }) });

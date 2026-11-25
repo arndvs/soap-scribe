@@ -36,6 +36,8 @@ export const ComposeRequest = z.object({
   previousNotes: z.array(PreviousNote).max(5),
   /** Set when the content script could not read the notes list. */
   previousNotesUnavailable: z.boolean().default(false),
+  /** No recording exists for today's visit: draft from previous notes only (gap G-23). */
+  withoutRecording: z.boolean().default(false),
 });
 export type ComposeRequest = z.infer<typeof ComposeRequest>;
 

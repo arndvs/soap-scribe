@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { suggestAppointment } from "./match.js";
-import { matchProtocols, protocolSentence } from "./protocols.js";
+import { datedProtocolSentence, formatPlanDate, matchProtocols, protocolSentence } from "./protocols.js";
+import { attachEvidence } from "./compose.js";
 import { enforceRules, composeDraft, buildComposePrompt } from "./compose.js";
 import { extractVisitFacts } from "./extract.js";
 import { FakeLlmClient } from "../llm/client.js";
@@ -141,3 +142,47 @@ describe("extractJson", () => {
     expect(extractJson('Here:\n```json\n{"a":1}\n```')).toEqual({ a: 1 });
   });
 });
+
+describe("dated plan lines (G-17) and evidence (G-19)", () => {
+  const item = protocolLibrary[0]!;
+  const base = {
+    facts,
+    template: template(),
+    previousNotes: [previousNote],
+    protocols: matchProtocols(facts.recommendationMentions, protocolLibrary),
+    visitDate: "2026-12-01",
+  };
+
+  it("dates a protocol line the way she does by hand, without touching her wording", () => {
+    expect(formatPlanDate("2026-11-04", "us")).toBe("11/4/26");
+    expect(datedProtocolSentence(item, { format: "us", givenOn: "2026-11-24" })).toBe(`${protocolSentence(item)} — given 11/24/26`);
+    expect(datedProtocolSentence(item, { format: "iso", givenOn: "2026-11-24", since: "2026-10-03" })).toBe(`${protocolSentence(item)} — since 2026-10-03`);
+    expect(datedProtocolSentence(item, { format: "off", givenOn: "2026-11-24" })).toBe(protocolSentence(item));
+  });
+
+  it("marks a protocol given on an earlier visit as a repeat, with its first date", () => {
+    const d = enforceRules(composeOutput, {
+      ...base,
+      planDateFormat: "us",
+      visitDate: "2026-12-01",
+      firstAssignedOn: new Map([["cat-cow", "2026-10-03"]]),
+    });
+    const catCow = d.sections.plan.find((s) => s.protocolId === "cat-cow")!;
+    expect(catCow.text).toMatch(/— since 10\/3\/26$/);
+    expect(catCow.assignedSince).toBe("2026-10-03");
+    expect(d.sections.plan.find((s) => s.protocolId === "wedge")!.text).toMatch(/— given 12\/1\/26$/);
+  });
+
+  it("links today's sentences to the transcript lines behind them, and never guesses", () => {
+    const sections = structuredClone(composeOutput.sections);
+    sections.objective.push({ text: "Gait normal.", source: "today" });
+    attachEvidence(sections, {
+      ...facts,
+      findings: facts.findings.map((f) => ({ ...f, evidence: ["Clinician: Recap: L5 left posterior, SI right"] })),
+    });
+    expect(sections.objective[0]!.evidence).toEqual(["Clinician: Recap: L5 left posterior, SI right"]);
+    expect(sections.objective.find((s) => s.text === "Gait normal.")!.evidence).toBeUndefined();
+    expect(sections.assessment[0]!.evidence).toBeUndefined(); // carried: no transcript behind it
+  });
+});
+

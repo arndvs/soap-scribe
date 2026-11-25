@@ -35,6 +35,12 @@ export function createMemoryRepos(): Repos {
         jobs.set(job.id, job);
         return { job: clone(job), created: true };
       },
+      async createWithoutRecording(job) {
+        const existing = [...jobs.values()].find((j) => j.pocketRecordingId === job.pocketRecordingId);
+        if (existing) return clone(existing);
+        jobs.set(job.id, clone(job));
+        return clone(job);
+      },
       async get(id) {
         const j = jobs.get(id);
         return j ? clone(j) : null;
