@@ -49,6 +49,7 @@ TODO: agents drafting, tests deciding what shipped, each change starting as a ti
 | [`docs/demo.md`](./docs/demo.md) | Demo mode: the whole flow locally with a fake Pocket, fake Jane and synthetic patients; the end-to-end test |
 | [`docs/first-real-checks.md`](./docs/first-real-checks.md) | Day 1 (Pocket) and day 2 (Jane) runbook, with the shape-only Pocket check and the de-identifying Jane capture tool |
 | [`docs/consent.md`](./docs/consent.md) | Draft recording-consent wording (intake, room sign, spoken script), pending legal review |
+| [`docs/design/`](./docs/design/) | Design notes, not built: [serving many practices](./docs/design/multi-practice.md) and [a live scribe in the room](./docs/design/live-mode.md) |
 | [`docs/ux/`](./docs/ux/) | The UX process applied: user stories, system map, flow, attributes, screen requirements, interface patterns, test plan, and a traceability matrix from every story to the code |
 | [`docs/gaps.md`](./docs/gaps.md) | Known gaps by priority, including what blocks real-patient use |
 | [`docs/verification.md`](./docs/verification.md) | How to run every check, with the last results |
