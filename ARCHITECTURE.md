@@ -88,9 +88,10 @@ sequenceDiagram
     C->>J: open the patient's chart
     X->>J: read the last 3 notes on the page
     X->>A: POST /drafts/compose with those notes
+    A->>DB: load what this patient was given on earlier visits
     A->>L: stage 2: facts + previous notes + template + carry rules
     L-->>A: S/O/A/P sentences tagged today / carried / updated
-    A->>A: enforce carry rules, add protocol items verbatim, flags
+    A->>A: enforce carry rules, add protocol items verbatim and dated, link sentences to transcript lines, flags
     A-->>X: draft
     C->>X: edit, click Insert
     X->>J: patient check, fill fields, read back (section 4)
@@ -98,7 +99,11 @@ sequenceDiagram
     A->>DB: record protocol assignments, audit, delete visit facts (inserted)
 ```
 
-**Where the appointments come from:** the side panel's Sync button reads the day schedule Jane is showing and sends it to `POST /appointments/sync`.
+**Where the appointments come from:** the side panel's Sync button reads the day schedule Jane is showing and sends it to `POST /appointments/sync`. The API files each appointment under its practice-local date (the browser's date can differ) and gives it a stable ID from the schedule row, so syncing again never detaches a confirmed recording. A recording that arrived before the schedule was synced gets its suggested patient when Today is next loaded.
+
+**What the draft carries besides the text:** protocol lines end "— given 11/24/26", or "— since" the first date when the patient had them before; `priorAssignments` lists everything given on earlier visits for the "Given before" strip; today and updated sentences carry the transcript lines they rest on ("What was said"), linked by code, not by the model.
+
+**A visit that wasn't recorded:** Today lists every appointment, recorded or not. From the chart she can draft from previous notes only: the API creates a job with no recording directly in `facts_ready` (the worker never claims it), composes with empty facts, so every sentence is carried and flagged, and the insert path is the same.
 
 **Previous notes** are read from the chart for each compose request and are not stored.
 
@@ -111,6 +116,7 @@ One job per recording. The worker claims a job by setting a 10-minute lease (`no
 ```mermaid
 stateDiagram-v2
     [*] --> received: webhook, or hourly reconciliation
+    [*] --> facts_ready: visit not recorded, she drafts from previous notes
     received --> fetched: recording + transcript fetched
     fetched --> needs_confirmation: appointment suggested (or none found)
     needs_confirmation --> confirmed: clinician confirms the patient
@@ -133,6 +139,8 @@ stateDiagram-v2
 | Leases instead of a stuck-job sweep | A crashed worker's job is picked up again with no extra job | `JobRepo.claimNext` |
 | Extraction waits for a confirmed patient | The wrong patient's notes never reach the prompt | `TRANSITIONS` in `shared/src/jobs.ts` |
 | Hourly reconciliation lists recent recordings from Pocket | A missed webhook still produces a job | `Worker.reconcile` |
+| A visit with no recording gets a job keyed `none:<patient>:<date>`, created in `facts_ready` | The worker never claims it; asking twice returns the same job | `JobRepo.createWithoutRecording` |
+| Appointment IDs are a hash of date, patient and start time | Re-syncing the schedule keeps confirmed jobs attached | `appointmentId` in `api/app.ts` |
 
 ---
 
@@ -177,13 +185,13 @@ flowchart LR
 |---|---|---|---|
 | `jobs` | No: IDs and status only | 30 days | Cleanup job |
 | `appointments` | Name, Jane patient ID, time | 7 days | Cleanup job (TTL index as backstop) |
-| `visitFacts` | Facts from today's visit | Deleted at insert; 7 days otherwise | Cleanup job (TTL index as backstop) |
-| `drafts` | The draft note | 24 hours after insert; 7 days if never inserted | Cleanup job |
+| `visitFacts` | Facts from today's visit, each with the transcript lines it cites | Deleted at insert; 7 days otherwise | Cleanup job (TTL index as backstop) |
+| `drafts` | The draft note, with cited transcript lines per sentence | 24 hours after insert; 7 days if never inserted | Cleanup job |
 | `settings`, `templateVersions` | Her template and shorthand, de-identified examples | Kept; every version kept | n/a |
 | `protocols`, `protocolAssignments` | Her library; which item was given to which Jane patient ID, when | Kept | n/a |
 | `audit` | Jane patient ID, action, time | Kept, append-only | No update or delete in the code |
 
-Previous notes read from Jane are used for one compose request and never stored. Transcripts are fetched from Pocket when needed and never stored.
+Previous notes read from Jane are used for one compose request and never stored. Whole transcripts are fetched from Pocket when needed and never stored; only the lines a fact cites are kept, inside `visitFacts` and `drafts`, and they're deleted on the same schedule.
 
 **Never in logs:** transcripts, notes, or patient names. The logger's type only accepts IDs, statuses, counts and error messages ([`log.ts`](./packages/server/src/log.ts)).
 
@@ -195,11 +203,15 @@ Previous notes read from Jane are used for one compose request and never stored.
 
 | Check | Runs in | Status |
 |---|---|---|
-| Shared: job transitions, source-tag rules, similarity | CI on every PR | 9 tests |
-| Server: matching, protocol matching, carry rules, validation retry, worker leases and backoff, alerts, cleanup, Pocket client and webhook signatures, eval scorer, API end to end | CI on every PR | 62 tests |
-| Repository contract on MongoDB | CI, against a `mongo:7` service | Runs in CI; skipped locally without `TEST_MONGODB_URI` |
-| Extension: page detection, reading notes and schedule, every fail-closed insert path, Settings first-run | CI on every PR | 13 tests (synthetic page) |
-| gitleaks, and a check that no audio, practice or env files are tracked | CI on every PR | `scripts/check-forbidden-files.mjs` |
+| Shared: job transitions, source-tag rules, similarity | CI on every push | 9 tests |
+| Server: matching, protocol matching and dates, carry rules, evidence links, validation retry, worker leases and backoff, alerts, cleanup, Pocket client and webhook signatures, eval scorer, demo stand-in, API end to end | CI on every push | 85 tests in CI, including the MongoDB contract |
+| Repository contract on MongoDB | CI, against a `mongo:7` service | Skipped locally without `TEST_MONGODB_URI` |
+| Extension: page detection, reading notes and schedule, every fail-closed insert path, Settings first run, the Today model | CI on every push | 15 tests (synthetic page) |
+| End to end: the built extension in Chromium against demo mode (fake Pocket, fake Jane, rule-based stand-in model); the browser runs on UTC | CI on every push (`pnpm test:e2e`) | 8 tests, including the wrong-patient guard and the Jane capture tool |
+| Container image builds | CI on every push | `docker build -f deploy/Dockerfile .` |
+| gitleaks, and a check that no audio, practice or env files are tracked | CI on every push | `scripts/check-forbidden-files.mjs` |
 | Draft test set: synthetic cases in the repo, her role-played visits from a private folder; zero invented findings | Manually before any prompt or model change (`pnpm --filter @soap-scribe/server eval`) | Runner built; real-model results pending (G-10) |
+
+The end-to-end tests prove the flow and the safety checks, not draft quality: the stand-in model only understands the demo's transcripts. See [`docs/demo.md`](./docs/demo.md).
 
 Results and dates go in [`docs/verification.md`](./docs/verification.md).

@@ -19,7 +19,7 @@ How to rerun each check, the last recorded result, and what was not run. Update 
 | No audio, practice or env files tracked | `pnpm check:files` | Passed | 2026-11-24 |
 | Secret scan | `gitleaks detect` (CI) | Not run locally | |
 | Server bundle and production install | `pnpm --filter @soap-scribe/server build`, then `pnpm --filter @soap-scribe/server deploy --prod --legacy /tmp/out` | Bundle loads from the production install and stops on missing env vars, printing names only | 2026-11-24 |
-| Container build | `docker build -f deploy/Dockerfile .` | Not run here (no Docker daemon) | |
+| Container build, and the image stops on missing config | CI job `image` | See the latest CI run | |
 | Draft test set, synthetic cases, real models | `pnpm --filter @soap-scribe/server eval` (needs AWS + model IDs) | Not run yet | |
 | Draft test set, her private cases | `EVAL_CASES_DIR=… pnpm --filter @soap-scribe/server eval` | Not run yet (G-10) | |
 
