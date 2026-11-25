@@ -1,0 +1,50 @@
+{
+  "id": "02-new-complaint",
+  "description": "Existing patient brings a new neck complaint; the old low back finding must not be carried as today's",
+  "transcript": [
+    {
+      "index": 0,
+      "speaker": "Patient",
+      "text": "My neck has been stiff since the flight on Sunday. Low back is fine now."
+    },
+    {
+      "index": 1,
+      "speaker": "Clinician",
+      "text": "Rotation to the right is limited. Let's check C5."
+    },
+    {
+      "index": 2,
+      "speaker": "Clinician",
+      "text": "Recap: C5 right, T4, diversified. Cervical right rotation limited. Neck four of ten. Back in one week."
+    }
+  ],
+  "previousNotes": [
+    {
+      "date": "2026-11-24",
+      "sections": {
+        "subjective": "Low back 3/10.",
+        "objective": "L5 left posterior.",
+        "assessment": "Lumbar segmental dysfunction, improving.",
+        "plan": "Continue weekly."
+      }
+    }
+  ],
+  "expected": {
+    "mustInclude": {
+      "subjective": [
+        "neck"
+      ],
+      "objective": [
+        "rotation"
+      ]
+    },
+    "mustNotInclude": [
+      "L5 left posterior"
+    ],
+    "spinalLevels": [
+      "C5",
+      "T4"
+    ],
+    "protocols": []
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "04-pregnancy-protocols",
+  "description": "Prenatal visit with two library recommendations given aloud",
+  "transcript": [
+    {
+      "index": 0,
+      "speaker": "Patient",
+      "text": "Thirty-two weeks now, sleeping on my side is hard on the low back."
+    },
+    {
+      "index": 1,
+      "speaker": "Clinician",
+      "text": "Use a wedge pillow under the belly when you're side-lying, and keep the cat-cow going twice a day."
+    },
+    {
+      "index": 2,
+      "speaker": "Clinician",
+      "text": "Recap: sacrum right, Webster technique, pelvic balance improved. Low back two of ten."
+    }
+  ],
+  "previousNotes": [],
+  "expected": {
+    "mustInclude": {
+      "objective": [
+        "Webster"
+      ]
+    },
+    "mustNotInclude": [],
+    "spinalLevels": [],
+    "protocols": [
+      "cat-cow",
+      "wedge"
+    ]
+  }
+}

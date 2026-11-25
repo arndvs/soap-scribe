@@ -1,0 +1,33 @@
+:root { font: 14px/1.45 system-ui, sans-serif; color: #1f2328; }
+body { margin: 0; }
+main { padding: 12px; }
+h1 { font-size: 16px; margin: 0; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: .04em; color: #57606a; }
+.row { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin: 6px 0; }
+button { font: inherit; padding: 4px 10px; border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa; cursor: pointer; }
+button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+button.link { border: 0; background: none; color: #0969da; padding: 0; }
+button.tab.active { background: #fff; border-color: #1f6feb; }
+button:disabled { opacity: .6; cursor: default; }
+select, input, textarea { font: inherit; border: 1px solid #d0d7de; border-radius: 6px; padding: 4px 6px; }
+textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.muted { color: #57606a; }
+.error { color: #cf222e; }
+.notice { background: #ddf4ff; padding: 6px 8px; border-radius: 6px; }
+.warning { background: #fff8c5; padding: 6px 8px; border-radius: 6px; }
+.flags { background: #fff8c5; margin: 8px 0; padding: 6px 8px 6px 24px; border-radius: 6px; }
+.list { list-style: none; padding: 0; }
+.card { border: 1px solid #d0d7de; border-radius: 8px; padding: 8px; margin: 8px 0; }
+.badge { font-size: 12px; padding: 1px 8px; border-radius: 10px; background: #eaeef2; }
+.badge.needs_confirmation, .badge.facts_ready { background: #ddf4ff; }
+.badge.failed { background: #ffebe9; }
+.section { margin: 12px 0; }
+.sentence { margin: 4px 0; }
+.sentence.carried textarea { color: #57606a; background: #f6f8fa; }
+.sentence.updated textarea { background: #fff8c5; }
+.sentence.protocol textarea { background: #dafbe1; }
+.meta { display: flex; gap: 8px; justify-content: flex-end; font-size: 12px; }
+.chip { color: #57606a; }
+.sticky { position: sticky; bottom: 0; background: #fff; padding: 8px 0; border-top: 1px solid #d0d7de; }
+label { display: block; margin: 12px 0 4px; }
+#token { width: 100%; box-sizing: border-box; }

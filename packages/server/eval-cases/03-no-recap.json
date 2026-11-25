@@ -1,0 +1,31 @@
+{
+  "id": "03-no-recap",
+  "description": "Visit without a spoken recap: the draft should flag rather than guess segments",
+  "transcript": [
+    {
+      "index": 0,
+      "speaker": "Patient",
+      "text": "Hips feel uneven again after the long drive."
+    },
+    {
+      "index": 1,
+      "speaker": "Clinician",
+      "text": "Okay, let's take a look and adjust."
+    }
+  ],
+  "previousNotes": [],
+  "expected": {
+    "mustInclude": {
+      "subjective": [
+        "drive"
+      ]
+    },
+    "mustNotInclude": [
+      "L4",
+      "L5",
+      "SI"
+    ],
+    "spinalLevels": [],
+    "protocols": []
+  }
+}

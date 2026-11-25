@@ -1,0 +1,58 @@
+{
+  "id": "01-routine-follow-up",
+  "description": "Routine follow-up with improving low back pain and a spoken recap",
+  "transcript": [
+    {
+      "index": 0,
+      "speaker": "Clinician",
+      "text": "How has the low back been this week?"
+    },
+    {
+      "index": 1,
+      "speaker": "Patient",
+      "text": "Better, about a three out of ten. Mornings are stiff."
+    },
+    {
+      "index": 2,
+      "speaker": "Clinician",
+      "text": "Keep up the cat-cow twice a day."
+    },
+    {
+      "index": 3,
+      "speaker": "Clinician",
+      "text": "Recap: L5 left posterior, right SI, diversified. Lumbar flexion improved. Low back three of ten. Continue weekly."
+    }
+  ],
+  "previousNotes": [
+    {
+      "date": "2026-11-24",
+      "sections": {
+        "subjective": "Low back 5/10, worse after lifting.",
+        "objective": "L5 left posterior. Lumbar flexion limited.",
+        "assessment": "Lumbar segmental dysfunction, improving.",
+        "plan": "Continue weekly. Cat-cow 2x/day."
+      }
+    }
+  ],
+  "expected": {
+    "mustInclude": {
+      "subjective": [
+        "3/10"
+      ],
+      "assessment": [
+        "improving"
+      ]
+    },
+    "mustNotInclude": [
+      "C5",
+      "radiating"
+    ],
+    "spinalLevels": [
+      "L5",
+      "SI"
+    ],
+    "protocols": [
+      "cat-cow"
+    ]
+  }
+}

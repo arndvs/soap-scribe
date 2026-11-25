@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SOAP Scribe settings</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <main>
+      <h1>SOAP Scribe</h1>
+      <form id="form">
+        <label for="token">Access token</label>
+        <input id="token" type="password" autocomplete="off" placeholder="Paste the token you were given" />
+        <div class="row">
+          <button class="primary" type="submit">Save</button>
+          <button type="button" id="clear">Remove token</button>
+        </div>
+      </form>
+      <p id="status" class="muted"></p>
+      <p class="muted">Templates, shorthand and your protocol library are edited in the practice settings, not here.</p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
