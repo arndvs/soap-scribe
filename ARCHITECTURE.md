@@ -204,7 +204,7 @@ Previous notes read from Jane are used for one compose request and never stored.
 | Check | Runs in | Status |
 |---|---|---|
 | Shared: job transitions, source-tag rules, similarity | CI on every push | 9 tests |
-| Server: matching, protocol matching and dates, carry rules, evidence links, validation retry, worker leases and backoff, alerts, cleanup, Pocket client and webhook signatures, eval scorer, demo stand-in, API end to end | CI on every push | 85 tests in CI, including the MongoDB contract |
+| Server: matching, protocol matching and dates, carry rules, evidence links, validation retry, worker leases and backoff, alerts, cleanup, Pocket client and webhook signatures, eval scorer, demo stand-in, API end to end | CI on every push | 90 tests in CI, including the MongoDB contract |
 | Repository contract on MongoDB | CI, against a `mongo:7` service | Skipped locally without `TEST_MONGODB_URI` |
 | Extension: page detection, reading notes and schedule, every fail-closed insert path, Settings first run, the Today model | CI on every push | 15 tests (synthetic page) |
 | End to end: the built extension in Chromium against demo mode (fake Pocket, fake Jane, rule-based stand-in model); the browser runs on UTC | CI on every push (`pnpm test:e2e`) | 8 tests, including the wrong-patient guard and the Jane capture tool |

@@ -38,7 +38,7 @@ Turns each recorded visit into a draft SOAP note that the clinician reviews and 
 
 ## Results
 
-- **109 unit and integration tests** in CI, including the repository contract run against a real MongoDB, plus **8 end-to-end tests** that load the built extension into Chromium against demo mode (the full visit, the wrong-patient guard, an unrecorded visit). CI also builds the container image.
+- **114 unit and integration tests** in CI, including the repository contract run against a real MongoDB, plus **8 end-to-end tests** that load the built extension into Chromium against demo mode (the full visit, the wrong-patient guard, an unrecorded visit). CI also builds the container image.
 - **Two bugs found by the tests before any user:** a re-sync that detached confirmed recordings, and a schedule filed under the browser's date instead of the practice's (CI runs the browser on UTC).
 - **Draft test set:** a deterministic scorer and 4 synthetic cases are in the repo; results on real models, and on her 10 role-played visits, are still to come.
 - TODO: her time to chart a full day, before and after.
