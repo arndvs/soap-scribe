@@ -1,0 +1,67 @@
+name: Deploy
+
+# Manual only. Needs these repository variables (Settings > Variables):
+#   AWS_REGION, AWS_ACCOUNT_ID, AWS_DEPLOY_ROLE_ARN (OIDC role), ECR_REPOSITORY,
+#   ECS_CLUSTER, ECS_API_SERVICE, ECS_WORKER_SERVICE
+# No AWS keys are stored in GitHub: the job assumes the role through OIDC.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: image
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
+        run: |
+          docker build -f deploy/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "uri=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Fill in account ID
+        run: sed -i "s/ACCOUNT_ID/${{ vars.AWS_ACCOUNT_ID }}/g" deploy/ecs/*.json
+
+      - id: api-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/ecs/api-task.json
+          container-name: api
+          image: ${{ steps.image.outputs.uri }}
+
+      - id: worker-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/ecs/worker-task.json
+          container-name: worker
+          image: ${{ steps.image.outputs.uri }}
+
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.api-task.outputs.task-definition }}
+          service: ${{ vars.ECS_API_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.worker-task.outputs.task-definition }}
+          service: ${{ vars.ECS_WORKER_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true

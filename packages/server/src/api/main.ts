@@ -8,9 +8,10 @@ import { createApp } from "./app.js";
 
 const config = loadConfig();
 const mongo = await connectMongo(config.MONGODB_URI, config.MONGODB_DB);
+const llm = createLlm(config);
 const drafts = createDraftService({
   repos: mongo.repos,
-  llm: createLlm(config),
+  llm,
   clock: systemClock,
   composeModel: config.LLM_MODEL_COMPOSE,
   timeZone: config.PRACTICE_TIMEZONE,
@@ -24,6 +25,8 @@ const app = createApp({
   extensionTokenHash: config.EXTENSION_TOKEN_HASH,
   pocketWebhookSecret: config.POCKET_WEBHOOK_SECRET,
   timeZone: config.PRACTICE_TIMEZONE,
+  llm,
+  composeModel: config.LLM_MODEL_COMPOSE,
 });
 
 const server = app.listen(config.PORT, () => jsonLogger.info({ event: "api_started" }));

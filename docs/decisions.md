@@ -8,10 +8,8 @@ Status values: **Accepted** (in force), **Open** (answer needed), **Deferred** (
 
 | ID | Question | Options | Recommendation | Owner | Blocks |
 |---|---|---|---|---|---|
-| D-01 | Does Pocket's recording details response include the transcript with speaker labels? | (a) Yes: use Pocket's transcript. (b) No: download audio and add our own speech-to-text, which needs its own BAA. | Check with a real call on day 1. Prefer (a): one fewer vendor. | Aaron | Worker design |
 | D-02 | Are Jane's SOAP fields plain text boxes or a rich-text editor? | (a) `textarea`: set value, dispatch `input` and `change`. (b) Rich text: use the editor's own insert path. | Inspect the test patient's chart on day 2. | Aaron | Insert |
 | D-03 | Which Bedrock model for each stage, and is it on AWS's HIPAA-eligible list? | A fast model for extraction, a stronger one for composing. | Confirm both models are covered by the AWS BAA; set `LLM_MODEL_EXTRACT` and `LLM_MODEL_COMPOSE`. | Aaron | Real patients |
-| D-04 | How does a webhook request prove it came from Pocket? | (a) A signature Pocket provides. (b) A secret path or token we register. | The code assumes an HMAC-SHA256 of the raw body in `x-pocket-signature` and rejects anything else. Confirm against Pocket's webhook docs on day 1. | Aaron | Webhook |
 | D-05 | Does the public write-up name the practice? | (a) Name it and link the existing case study. (b) "A San Diego chiropractic practice." | The clinician decides. | Clinician | Write-up |
 
 ## Accepted
@@ -38,6 +36,10 @@ Status values: **Accepted** (in force), **Open** (answer needed), **Deferred** (
 | D-27 | Workers claim jobs with a lease instead of a stuck-job sweep. | A crashed worker needs no cleanup; the same rule works with Postgres `SKIP LOCKED`. | `JobRepo.claimNext` |
 | D-28 | All data access goes through repository interfaces with a shared contract test. | Built on MongoDB for the target role's stack; the practice's main app runs on Postgres, and the move is a new implementation that passes the same tests. | `packages/server/src/repos/` |
 | D-29 | Amazon Bedrock for both stages, through the server's IAM role. | One AWS BAA covers hosting and the model; no LLM key exists. | `packages/server/src/llm/client.ts` |
+| D-34 | Use Pocket's transcript (segments with speaker labels from `GET /public/recordings/{id}`); no separate speech-to-text. Answers former D-01. | One fewer vendor and BAA; the transcript is already speaker-labelled. | `packages/server/src/pocket/client.ts` |
+| D-35 | Verify webhooks per Pocket's docs: HMAC-SHA256 of `{timestamp}.{rawBody}` in `X-HeyPocket-Signature`, and reject deliveries more than 5 minutes off. Answers former D-04. | Pocket sets no tolerance window; the 5-minute limit blocks replays. | `verifyPocketSignature` |
+| D-36 | Only `transcription.completed` creates a job; other events are acknowledged and ignored. | The transcript exists by then, so the worker doesn't wait; hourly reconciliation catches anything missed. | `JOB_EVENTS` |
+| D-37 | One container image for API and worker; deploys are manual, through GitHub OIDC, with no AWS keys in GitHub. | Fewer moving parts; nothing reaches the practice without a person starting it. | `deploy/`, `.github/workflows/deploy.yml` |
 | D-33 | Logs accept only IDs, statuses, counts and error messages, enforced by type. | Logs are where patient data usually leaks. | `packages/server/src/log.ts` |
 
 ## Deferred

@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+.git
+.env
+.env.*
+!.env.example
+practice/
+fixtures/private/
+*.m4a
+*.mp3
+*.wav
+eval-results.json

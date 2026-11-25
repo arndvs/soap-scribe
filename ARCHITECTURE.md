@@ -74,7 +74,7 @@ sequenceDiagram
     participant J as Jane
 
     C->>P: record visit, end with a 20-second recap
-    P->>A: webhook (signature verified)
+    P->>A: webhook transcription.completed (signature verified)
     A->>DB: upsert job by pocketRecordingId (received)
     W->>DB: claim job with a 10-minute lease
     W->>P: GET recording + transcript
@@ -196,10 +196,10 @@ Previous notes read from Jane are used for one compose request and never stored.
 | Check | Runs in | Status |
 |---|---|---|
 | Shared: job transitions, source-tag rules, similarity | CI on every PR | 9 tests |
-| Server: matching, protocol matching, carry rules, validation retry, worker leases and backoff, cleanup, API end to end | CI on every PR | 46 tests |
+| Server: matching, protocol matching, carry rules, validation retry, worker leases and backoff, alerts, cleanup, Pocket client and webhook signatures, eval scorer, API end to end | CI on every PR | 62 tests |
 | Repository contract on MongoDB | CI, against a `mongo:7` service | Runs in CI; skipped locally without `TEST_MONGODB_URI` |
-| Extension: page detection, reading notes and schedule, every fail-closed insert path | CI on every PR | 12 tests (synthetic page) |
+| Extension: page detection, reading notes and schedule, every fail-closed insert path, Settings first-run | CI on every PR | 13 tests (synthetic page) |
 | gitleaks, and a check that no audio, practice or env files are tracked | CI on every PR | `scripts/check-forbidden-files.mjs` |
-| Draft test set: 10 role-played visits vs. her ideal notes; zero invented findings | Manually before any prompt or model change | Not built yet (G-10) |
+| Draft test set: synthetic cases in the repo, her role-played visits from a private folder; zero invented findings | Manually before any prompt or model change (`pnpm --filter @soap-scribe/server eval`) | Runner built; real-model results pending (G-10) |
 
 Results and dates go in [`docs/verification.md`](./docs/verification.md).

@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockForDrafting",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel"],
+      "Resource": [
+        "arn:aws:bedrock:us-west-2::foundation-model/REPLACE_WITH_EXTRACT_MODEL_ID",
+        "arn:aws:bedrock:us-west-2::foundation-model/REPLACE_WITH_COMPOSE_MODEL_ID"
+      ]
+    },
+    {
+      "Sid": "FailureAlerts",
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail"],
+      "Resource": "arn:aws:ses:us-west-2:ACCOUNT_ID:identity/REPLACE_WITH_SENDER_DOMAIN_OR_ADDRESS"
+    }
+  ]
+}

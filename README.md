@@ -22,7 +22,9 @@ Turns each recorded visit into a draft SOAP note that the clinician reviews and 
 
 ## Results
 
-TODO once built: test counts per package, the draft test set (10 synthetic visits, invented findings: 0), and the time to chart a full day before and after.
+- **84 automated tests** across the three packages, plus the MongoDB repository contract in CI.
+- **Draft test set:** a deterministic scorer and 4 synthetic cases are in the repo; results on real models, and on her 10 role-played visits, are still to come.
+- TODO: her time to chart a full day, before and after.
 
 ## Walkthroughs
 
@@ -46,9 +48,11 @@ TODO: agents drafting, tests deciding what shipped, each change starting as a ti
 | [`docs/decisions.md`](./docs/decisions.md) | Decisions with their reasons, open questions, and what's deferred |
 | [`docs/gaps.md`](./docs/gaps.md) | Known gaps by priority, including what blocks real-patient use |
 | [`docs/verification.md`](./docs/verification.md) | How to run every check, with the last results |
+| [`docs/deploy.md`](./docs/deploy.md) | Running it on AWS: services, one-time setup, deploys, installing the extension, rotating secrets |
+| [`deploy/`](./deploy/) | Dockerfile, ECS task definitions, IAM policies |
 | [`packages/shared/`](./packages/shared/) | zod domain types and API contracts shared by server and extension |
-| [`packages/server/`](./packages/server/) | Express API, worker, two-stage drafting pipeline, repository layer (in-memory and MongoDB), retention cleanup |
-| [`packages/extension/`](./packages/extension/) | MV3 extension: side panel (Today, Chart), content script, `jane-map.ts`, options page for the token |
+| [`packages/server/`](./packages/server/) | Express API, worker, two-stage drafting pipeline, repository layer (in-memory and MongoDB), retention cleanup, failure alerts, draft test set ([`eval-cases/`](./packages/server/eval-cases/)) |
+| [`packages/extension/`](./packages/extension/) | MV3 extension: side panel (Today, Chart, Settings), content script, `jane-map.ts`, options page for the token |
 
 ## Running the checks
 

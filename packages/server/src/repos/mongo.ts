@@ -207,6 +207,9 @@ export function createMongoRepos(db: Db): Repos {
       async listActive() {
         return (await protocols.find({ active: true }).sort({ title: 1 }).toArray()).map((d) => fromDoc<ProtocolItem>(d)!);
       },
+      async listAll() {
+        return (await protocols.find({}).sort({ title: 1 }).toArray()).map((d) => fromDoc<ProtocolItem>(d)!);
+      },
       async get(id) {
         return fromDoc<ProtocolItem>(await protocols.findOne({ _id: id as never }));
       },

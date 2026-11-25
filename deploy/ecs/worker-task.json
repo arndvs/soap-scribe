@@ -1,0 +1,90 @@
+{
+  "family": "soap-scribe-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/soap-scribe-execution",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/soap-scribe-task",
+  "containerDefinitions": [
+    {
+      "name": "worker",
+      "image": "IMAGE_URI",
+      "essential": true,
+      "command": [
+        "node",
+        "dist/worker.js"
+      ],
+      "environment": [
+        {
+          "name": "MONGODB_DB",
+          "value": "soap-scribe"
+        },
+        {
+          "name": "LLM_PROVIDER",
+          "value": "bedrock"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-west-2"
+        },
+        {
+          "name": "LLM_MODEL_EXTRACT",
+          "value": "REPLACE_WITH_BEDROCK_MODEL_ID"
+        },
+        {
+          "name": "LLM_MODEL_COMPOSE",
+          "value": "REPLACE_WITH_BEDROCK_MODEL_ID"
+        },
+        {
+          "name": "DRAFT_TTL_HOURS",
+          "value": "24"
+        },
+        {
+          "name": "PRACTICE_TIMEZONE",
+          "value": "America/Los_Angeles"
+        },
+        {
+          "name": "ALERT_EMAIL",
+          "value": "REPLACE_WITH_ALERT_ADDRESS"
+        },
+        {
+          "name": "ALERT_FROM_EMAIL",
+          "value": "REPLACE_WITH_SES_VERIFIED_SENDER"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "MONGODB_URI",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:MONGODB_URI::"
+        },
+        {
+          "name": "POCKET_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:POCKET_API_KEY::"
+        },
+        {
+          "name": "POCKET_WEBHOOK_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:POCKET_WEBHOOK_SECRET::"
+        },
+        {
+          "name": "EXTENSION_TOKEN_HASH",
+          "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:EXTENSION_TOKEN_HASH::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/soap-scribe/worker",
+          "awslogs-region": "us-west-2",
+          "awslogs-stream-prefix": "worker"
+        }
+      }
+    }
+  ]
+}

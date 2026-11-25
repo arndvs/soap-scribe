@@ -20,6 +20,8 @@ import { newId } from "../ids.js";
 import { errorText, type Logger } from "../log.js";
 import { JOB_EVENTS, POCKET_SIGNATURE_HEADER, POCKET_TIMESTAMP_HEADER, parseWebhook, verifyPocketSignature } from "../pocket/client.js";
 import { ConflictError, NotFoundError, type DraftService } from "../services/drafts.js";
+import { previewTemplate } from "../services/preview.js";
+import type { LlmClient } from "../llm/client.js";
 
 export interface AppDeps {
   repos: Repos;
@@ -31,6 +33,9 @@ export interface AppDeps {
   timeZone: string;
   /** Lets the worker know new work arrived without waiting for its next poll. */
   onJobCreated?: () => void;
+  /** For the Settings Preview, which composes a synthetic visit. */
+  llm?: LlmClient;
+  composeModel?: string;
 }
 
 export const sha256Hex = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
@@ -196,6 +201,19 @@ export function createApp(d: AppDeps) {
 
   app.get("/templates/:id/versions", handle(async (req, res) => {
     res.json({ versions: await d.repos.settings.listTemplateVersions(String(req.params.id)) });
+  }));
+
+  /** Preview an unsaved template on a synthetic visit. No patient data is involved. */
+  app.post("/settings/preview", handle(async (req, res) => {
+    if (!d.llm || !d.composeModel) throw new ConflictError("preview is not configured");
+    const template = Template.parse({ ...req.body, id: "preview", version: 1, updatedAt: d.clock.now().toISOString() });
+    const library = await d.repos.protocols.listActive();
+    res.json({ preview: await previewTemplate(d.llm, d.composeModel, template, library) });
+  }));
+
+  /** Every protocol, including inactive ones, for the Settings editor. */
+  app.get("/protocols/all", handle(async (_req, res) => {
+    res.json({ protocols: await d.repos.protocols.listAll() });
   }));
 
   app.get("/protocols", handle(async (_req, res) => {

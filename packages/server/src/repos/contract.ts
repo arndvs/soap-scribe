@@ -123,6 +123,14 @@ export function repoContract(name: string, make: () => Promise<Repos>) {
       await expect(r.settings.saveTemplateVersion(tpl(2))).rejects.toThrow();
     });
 
+    it("lists active protocols for drafting and all protocols for editing", async () => {
+      const item = { title: "x", instruction: "y", category: "home_exercise" as const, aliases: [] };
+      await r.protocols.upsert({ ...item, id: "b", title: "Bird dog", active: true });
+      await r.protocols.upsert({ ...item, id: "a", title: "Arm circles", active: false });
+      expect((await r.protocols.listActive()).map((p) => p.id)).toEqual(["b"]);
+      expect((await r.protocols.listAll()).map((p) => p.id)).toEqual(["a", "b"]);
+    });
+
     it("lists protocol assignments newest first", async () => {
       await r.protocols.recordAssignments([
         { id: "x1", janePatientId: "p-1", protocolId: "cat-cow", assignedOn: "2026-11-20", draftId: "d" },

@@ -71,6 +71,7 @@ export interface SettingsRepo {
 
 export interface ProtocolRepo {
   listActive(): Promise<ProtocolItem[]>;
+  listAll(): Promise<ProtocolItem[]>;
   get(id: string): Promise<ProtocolItem | null>;
   upsert(item: ProtocolItem): Promise<void>;
   recordAssignments(assignments: ProtocolAssignment[]): Promise<void>;

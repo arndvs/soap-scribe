@@ -31,3 +31,7 @@ textarea { width: 100%; box-sizing: border-box; resize: vertical; }
 .sticky { position: sticky; bottom: 0; background: #fff; padding: 8px 0; border-top: 1px solid #d0d7de; }
 label { display: block; margin: 12px 0 4px; }
 #token { width: 100%; box-sizing: border-box; }
+.inline { display: inline-flex; gap: 4px; align-items: center; margin: 0; }
+.card input, .card select { max-width: 100%; }
+input:not([type=checkbox]), select { width: 100%; box-sizing: border-box; }
+.row input:not([type=checkbox]) { width: auto; flex: 1; }

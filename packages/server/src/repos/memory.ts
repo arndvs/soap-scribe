@@ -164,6 +164,9 @@ export function createMemoryRepos(): Repos {
       async listActive() {
         return [...protocols.values()].filter((p) => p.active).map(clone);
       },
+      async listAll() {
+        return [...protocols.values()].sort((a, b) => a.title.localeCompare(b.title)).map(clone);
+      },
       async get(id) {
         const p = protocols.get(id);
         return p ? clone(p) : null;

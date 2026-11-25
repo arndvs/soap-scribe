@@ -37,6 +37,8 @@ describe("API", () => {
       extensionTokenHash: sha256Hex(TOKEN),
       pocketWebhookSecret: SECRET,
       timeZone: "America/Los_Angeles",
+      llm,
+      composeModel: "compose-model",
     });
     worker = new Worker({ repos, pocket, llm, clock, log: silentLogger, extractModel: "extract-model", timeZone: "America/Los_Angeles" });
     await repos.settings.saveSettings(settings());
@@ -126,6 +128,14 @@ describe("API", () => {
     await authed(request(app).put("/templates/tpl-1")).send({ ...body, styleNotes: "v2" }).expect(200);
     const versions = (await authed(request(app).get("/templates/tpl-1/versions")).expect(200)).body.versions;
     expect(versions.map((v: { version: number }) => v.version)).toEqual([2, 1]);
+  });
+
+  it("previews an unsaved template on the synthetic visit", async () => {
+    llm.push(JSON.stringify(composeOutput));
+    const { id, version, updatedAt, ...body } = template();
+    const preview = (await authed(request(app).post("/settings/preview")).send(body).expect(200)).body.preview;
+    expect(preview.sections.plan.some((s: { protocolId?: string }) => s.protocolId === "cat-cow")).toBe(true);
+    expect(llm.requests.at(-1)?.user).not.toMatch(/1001/);
   });
 
   it("validates settings before saving", async () => {

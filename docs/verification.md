@@ -8,26 +8,30 @@ How to rerun each check, the last recorded result, and what was not run. Update 
 |---|---|---|---|
 | Everything below in one command | `pnpm run ci` | Passed | 2026-11-24 |
 | Shared schemas and job transitions | `pnpm --filter @soap-scribe/shared test` | 9 passed | 2026-11-24 |
-| Server: pipeline, worker, API, Pocket parsing, repository contract (in-memory) | `pnpm --filter @soap-scribe/server test` | 46 passed, 1 skipped (MongoDB contract) | 2026-11-24 |
+| Server: pipeline, worker, API, Pocket client and webhooks, alerts, eval scorer, repository contract (in-memory) | `pnpm --filter @soap-scribe/server test` | 62 passed, 1 skipped (MongoDB contract) | 2026-11-24 |
 | Repository contract on MongoDB | `TEST_MONGODB_URI=mongodb://localhost:27017 pnpm --filter @soap-scribe/server test` | Not run locally (no MongoDB here); runs in CI | |
-| Extension: page logic and fail-closed insert | `pnpm --filter @soap-scribe/extension test` | 12 passed | 2026-11-24 |
+| Extension: page logic, fail-closed insert, Settings first-run render | `pnpm --filter @soap-scribe/extension test` | 13 passed | 2026-11-24 |
 | Typecheck, all three packages | `pnpm typecheck` | Passed | 2026-11-24 |
 | Extension build; bundle checked for secret names | `API_URL=… JANE_HOST=… pnpm --filter @soap-scribe/extension build` | Built; no `POCKET`, `MONGODB` or `pk_` strings in the bundle | 2026-11-24 |
 | No audio, practice or env files tracked | `pnpm check:files` | Passed | 2026-11-24 |
 | Secret scan | `gitleaks detect` (CI) | Not run locally | |
-| Draft test set (10 synthetic visits) | Not built yet (G-10) | | |
+| Server bundle and production install | `pnpm --filter @soap-scribe/server build`, then `pnpm --filter @soap-scribe/server deploy --prod --legacy /tmp/out` | Bundle loads from the production install and stops on missing env vars, printing names only | 2026-11-24 |
+| Container build | `docker build -f deploy/Dockerfile .` | Not run here (no Docker daemon) | |
+| Draft test set, synthetic cases, real models | `pnpm --filter @soap-scribe/server eval` (needs AWS + model IDs) | Not run yet | |
+| Draft test set, her private cases | `EVAL_CASES_DIR=… pnpm --filter @soap-scribe/server eval` | Not run yet (G-10) | |
 
 ## Draft test set: pass rule
 
 A run passes only if **no case contains an invented finding**. Missing findings and wrong spinal levels are reported per case and should trend down; an invented finding blocks the change.
 
-| Case | Visit type | Invented | Missing | Wrong level | Notes |
+The scorer ([`packages/server/src/eval/score.ts`](../packages/server/src/eval/score.ts)) counts an *invented* finding as a spinal level the draft names that neither the transcript nor a previous note mentions, or a phrase the case forbids. It's deterministic, so every failure can be explained.
+
+| Case | Visit type | Invented | Missing | Protocols | Notes |
 |---|---|---|---|---|---|
-| 01 | Routine adjustment | | | | |
-| 02 | New complaint | | | | |
-| 03 | Re-exam | | | | |
-| 04 | No spoken recap | | | | |
-| 05–10 | | | | | |
+| 01 | Routine follow-up, carried assessment | | | | |
+| 02 | New complaint; old finding must not reappear as today's | | | | |
+| 03 | No spoken recap | | | | |
+| 04 | Prenatal, two library recommendations | | | | |
 
 ## Not run here
 

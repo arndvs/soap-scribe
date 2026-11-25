@@ -1,0 +1,45 @@
+{
+  "family": "soap-scribe-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": { "cpuArchitecture": "X86_64", "operatingSystemFamily": "LINUX" },
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/soap-scribe-execution",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/soap-scribe-task",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "IMAGE_URI",
+      "essential": true,
+      "command": ["node", "dist/api.js"],
+      "portMappings": [{ "containerPort": 8787, "protocol": "tcp" }],
+      "environment": [
+        { "name": "PORT", "value": "8787" },
+        { "name": "MONGODB_DB", "value": "soap-scribe" },
+        { "name": "LLM_PROVIDER", "value": "bedrock" },
+        { "name": "AWS_REGION", "value": "us-west-2" },
+        { "name": "LLM_MODEL_EXTRACT", "value": "REPLACE_WITH_BEDROCK_MODEL_ID" },
+        { "name": "LLM_MODEL_COMPOSE", "value": "REPLACE_WITH_BEDROCK_MODEL_ID" },
+        { "name": "DRAFT_TTL_HOURS", "value": "24" },
+        { "name": "PRACTICE_TIMEZONE", "value": "America/Los_Angeles" }
+      ],
+      "secrets": [
+        { "name": "MONGODB_URI", "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:MONGODB_URI::" },
+        { "name": "POCKET_API_KEY", "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:POCKET_API_KEY::" },
+        { "name": "POCKET_WEBHOOK_SECRET", "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:POCKET_WEBHOOK_SECRET::" },
+        { "name": "EXTENSION_TOKEN_HASH", "valueFrom": "arn:aws:secretsmanager:us-west-2:ACCOUNT_ID:secret:soap-scribe:EXTENSION_TOKEN_HASH::" }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"fetch('http://localhost:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": { "awslogs-group": "/soap-scribe/api", "awslogs-region": "us-west-2", "awslogs-stream-prefix": "api" }
+      }
+    }
+  ]
+}

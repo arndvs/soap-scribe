@@ -4,12 +4,17 @@ import type {
   Draft,
   DraftSections,
   PracticeSettings,
+  DraftFlag,
   ProtocolAssignment,
+  ProtocolItem,
   Template,
   TodayResponse,
 } from "@soap-scribe/shared";
 
 declare const __API_URL__: string;
+
+/** What the editor sends; the server assigns id, version and updatedAt. */
+export type TemplateInput = Omit<Template, "id" | "version" | "updatedAt">;
 
 /** Non-secret, injected at build time from an allowlist. The token is never bundled. */
 export const API_URL: string = typeof __API_URL__ === "string" ? __API_URL__ : "http://localhost:8787";
@@ -58,6 +63,12 @@ export const api = {
   markInserted: (id: string, janePatientIdOnPage: string) =>
     call<{ draft: Draft }>("POST", `/drafts/${id}/inserted`, { janePatientIdOnPage, readBackMatched: true }),
   settings: () => call<{ settings: PracticeSettings | null; template: Template | null }>("GET", "/settings"),
+  saveSettings: (s: Omit<PracticeSettings, "updatedAt">) => call<{ settings: PracticeSettings }>("PUT", "/settings", s),
+  saveTemplate: (id: string, t: TemplateInput) => call<{ template: Template }>("PUT", `/templates/${encodeURIComponent(id)}`, t),
+  templateVersions: (id: string) => call<{ versions: Template[] }>("GET", `/templates/${encodeURIComponent(id)}/versions`),
+  preview: (t: TemplateInput) => call<{ preview: { sections: DraftSections; flags: DraftFlag[] } }>("POST", "/settings/preview", t),
+  protocols: () => call<{ protocols: ProtocolItem[] }>("GET", "/protocols/all"),
+  saveProtocol: (p: ProtocolItem) => call<{ protocol: ProtocolItem }>("PUT", `/protocols/${encodeURIComponent(p.id)}`, p),
   assignments: (janePatientId: string) =>
     call<{ assignments: ProtocolAssignment[] }>("GET", `/patients/${encodeURIComponent(janePatientId)}/assignments`),
 };
