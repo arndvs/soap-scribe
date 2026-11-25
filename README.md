@@ -22,7 +22,7 @@ Turns each recorded visit into a draft SOAP note that the clinician reviews and 
 
 ## Results
 
-- **84 automated tests** across the three packages, plus the MongoDB repository contract in CI.
+- **94 automated tests** in CI across the three packages, including the repository contract run against a real MongoDB.
 - **Draft test set:** a deterministic scorer and 4 synthetic cases are in the repo; results on real models, and on her 10 role-played visits, are still to come.
 - TODO: her time to chart a full day, before and after.
 

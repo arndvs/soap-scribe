@@ -9,7 +9,8 @@ How to rerun each check, the last recorded result, and what was not run. Update 
 | Everything below in one command | `pnpm run ci` | Passed | 2026-11-24 |
 | Shared schemas and job transitions | `pnpm --filter @soap-scribe/shared test` | 9 passed | 2026-11-24 |
 | Server: pipeline, worker, API, Pocket client and webhooks, alerts, eval scorer, repository contract (in-memory) | `pnpm --filter @soap-scribe/server test` | 62 passed, 1 skipped (MongoDB contract) | 2026-11-24 |
-| Repository contract on MongoDB | `TEST_MONGODB_URI=mongodb://localhost:27017 pnpm --filter @soap-scribe/server test` | Not run locally (no MongoDB here); runs in CI | |
+| Repository contract on MongoDB | `TEST_MONGODB_URI=mongodb://localhost:27017 pnpm --filter @soap-scribe/server test` | Passed in CI against `mongo:7`: server suite 72 passed, 0 skipped | 2026-11-24 |
+| GitHub Actions CI (gitleaks + check) | Push to `main` | Both jobs passed on `011cf81` | 2026-11-24 |
 | Extension: page logic, fail-closed insert, Settings first-run render | `pnpm --filter @soap-scribe/extension test` | 13 passed | 2026-11-24 |
 | Typecheck, all three packages | `pnpm typecheck` | Passed | 2026-11-24 |
 | Extension build; bundle checked for secret names | `API_URL=… JANE_HOST=… pnpm --filter @soap-scribe/extension build` | Built; no `POCKET`, `MONGODB` or `pk_` strings in the bundle | 2026-11-24 |
