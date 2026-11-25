@@ -8,7 +8,20 @@ Turns each recorded visit into a draft SOAP note that the clinician reviews and 
 
 **Why this one:** my wife is a chiropractor. Her EMR has an AI scribe, and it doesn't fit how her visits work: visits are short, and most of what goes in the note (the segments she adjusted, the technique, range of motion) is never said out loud. So she writes notes after dinner. TODO: one or two sentences in your own words, and her before-and-after time to chart a day once you have it.
 
-<!-- TODO: screenshot of the side panel on a synthetic test patient -->
+<table>
+<tr>
+<td width="33%"><img src="docs/images/today.png" alt="Today view: every appointment with its state; one visit has no recording"></td>
+<td width="33%"><img src="docs/images/chart-draft.png" alt="A draft: carried, updated and new sentences tagged, the transcript line behind a sentence, what the patient was given before"></td>
+<td width="33%"><img src="docs/images/jane-inserted.png" alt="The note inserted into a fake Jane chart, ready for her to save and sign"></td>
+</tr>
+<tr>
+<td><sub><b>Today.</b> Every visit and its state, including one that wasn't recorded.</sub></td>
+<td><sub><b>The draft.</b> Changed lines show what they replaced; "What was said" shows the transcript line; "Given before" lists earlier recommendations with dates.</sub></td>
+<td><sub><b>Inserted.</b> All four fields filled and read back. She saves and signs herself.</sub></td>
+</tr>
+</table>
+
+<sub>Synthetic patients in demo mode, against a fake Jane page. Run it yourself: <a href="docs/demo.md"><code>pnpm demo</code></a>.</sub>
 
 ---
 
@@ -18,11 +31,15 @@ Turns each recorded visit into a draft SOAP note that the clinician reviews and 
 - **Asks before it guesses the patient.** The worker matches each recording to her schedule by start time, and she confirms the match before any draft is written.
 - **Drafts in her format, and flags instead of inventing.** The model returns structured S/O/A/P from the transcript, the recap, her template, and her last note for that patient. Anything not stated becomes a flag, never a typical finding.
 - **Writes into Jane only on her click, and fails closed.** The extension checks the patient on the page matches the draft, fills the four fields, and reads them back. If anything doesn't match, nothing is written and she gets the text to copy instead. She saves and signs in Jane herself.
+- **Carries forward what didn't change, and shows it.** Every sentence is tagged new, carried, updated (with the old wording) or from her library, so she reviews in seconds.
+- **Dates her recommendations and remembers them.** Library items go in word for word, dated "given" or "since"; everything a patient was given before is listed beside the Plan with one-click re-add.
+- **Shows what was said.** Each new or changed sentence links to the transcript lines it came from.
 - **Keeps almost nothing.** Drafts are deleted a day after insert; the database enforces every retention rule.
 
 ## Results
 
-- **94 automated tests** in CI across the three packages, including the repository contract run against a real MongoDB.
+- **109 unit and integration tests** in CI, including the repository contract run against a real MongoDB, plus **8 end-to-end tests** that load the built extension into Chromium against demo mode (the full visit, the wrong-patient guard, an unrecorded visit). CI also builds the container image.
+- **Two bugs found by the tests before any user:** a re-sync that detached confirmed recordings, and a schedule filed under the browser's date instead of the practice's (CI runs the browser on UTC).
 - **Draft test set:** a deterministic scorer and 4 synthetic cases are in the repo; results on real models, and on her 10 role-played visits, are still to come.
 - TODO: her time to chart a full day, before and after.
 
