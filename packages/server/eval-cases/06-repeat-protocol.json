@@ -1,0 +1,29 @@
+{
+  "id": "06-repeat-protocol",
+  "description": "Prenatal follow-up: one recommendation given before (dated since), one new today (dated given)",
+  "assignedBefore": { "cat-cow": "2026-11-10" },
+  "transcript": [
+    { "index": 0, "speaker": "Clinician", "text": "How is the low back this week?" },
+    { "index": 1, "speaker": "Patient", "text": "About a four out of ten. Side sleeping still hurts." },
+    { "index": 2, "speaker": "Clinician", "text": "Keep the cat-cow twice a day, and try a wedge pillow under the belly when side-lying." },
+    { "index": 3, "speaker": "Clinician", "text": "Recap: L5 left posterior. Webster technique. Low back four of ten. Continue weekly." }
+  ],
+  "previousNotes": [
+    {
+      "date": "2026-11-24",
+      "sections": {
+        "subjective": "Low back 5/10, 31 weeks pregnant.",
+        "objective": "L5 left posterior.",
+        "assessment": "Lumbar segmental dysfunction, pregnancy related.",
+        "plan": "Weekly."
+      }
+    }
+  ],
+  "expected": {
+    "mustInclude": { "subjective": ["4/10"] },
+    "mustNotInclude": ["radiating"],
+    "spinalLevels": ["L5"],
+    "protocols": ["cat-cow", "wedge"],
+    "protocolsSince": { "cat-cow": "2026-11-10" }
+  }
+}

@@ -9,6 +9,7 @@ import { EvalCase } from "./types.js";
 import { PracticeSettings, ProtocolItem, Template } from "../domain.js";
 import { z } from "zod";
 import { scoreCase, summarize, type CaseScore } from "./score.js";
+import { EMPTY_FACTS } from "../services/drafts.js";
 
 /**
  * Runs the draft test set against the real models.
@@ -42,13 +43,17 @@ export async function runEval(
 ): Promise<CaseScore[]> {
   const scores: CaseScore[] = [];
   for (const c of cases) {
-    const facts = await extractVisitFacts(llm, models.extract, c.transcript, practice.settings.glossary);
+    const facts = c.withoutRecording
+      ? EMPTY_FACTS
+      : await extractVisitFacts(llm, models.extract, c.transcript, practice.settings.glossary);
     const draft = await composeDraft(llm, models.compose, {
       facts,
       template: practice.template,
       previousNotes: c.previousNotes,
       protocols: matchProtocols(facts.recommendationMentions, practice.protocols),
       visitDate: "2026-12-01",
+      planDateFormat: "us",
+      firstAssignedOn: new Map(Object.entries(c.assignedBefore)),
     });
     scores.push(scoreCase(c, draft.sections));
   }
@@ -66,7 +71,7 @@ async function main() {
     console.log(`${s.passed ? "PASS" : "FAIL"}  ${s.id}  invented: ${s.invented.join(", ") || "none"}  missing: ${s.missing.join(", ") || "none"}`);
   }
   const summary = summarize(scores);
-  console.log(`\n${summary.cases} cases · invented ${summary.invented} · missing ${summary.missing} · protocol mismatches ${summary.protocolMismatches} · ${summary.passed ? "PASSED" : "FAILED"}`);
+  console.log(`\n${summary.cases} cases · invented ${summary.invented} · wrong citations ${summary.wrongEvidence} · missing ${summary.missing} · protocol mismatches ${summary.protocolMismatches} · dating errors ${summary.datingErrors} · ${summary.passed ? "PASSED" : "FAILED"}`);
   writeFileSync(process.env.EVAL_OUT ?? "eval-results.json", JSON.stringify({ at: new Date().toISOString(), summary, scores }, null, 2));
   process.exit(summary.passed ? 0 : 1);
 }

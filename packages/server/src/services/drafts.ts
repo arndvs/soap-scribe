@@ -19,7 +19,7 @@ export interface DraftServiceDeps {
 
 export const NO_RECORDING = "none:";
 
-const EMPTY_FACTS: VisitFacts = {
+export const EMPTY_FACTS: VisitFacts = {
   complaints: [],
   findings: [],
   treatments: [],

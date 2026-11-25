@@ -143,6 +143,14 @@ describe("extractJson", () => {
   });
 });
 
+describe("protocol matching, two in one sentence", () => {
+  it("matches every library item a single sentence names", () => {
+    const r = matchProtocols([{ text: "Keep the cat-cow twice a day, and try a wedge pillow under the belly", sourceSegments: [0] }], protocolLibrary);
+    expect(r.matched.map((m) => m.item.id).sort()).toEqual(["cat-cow", "wedge"]);
+    expect(r.unmatched).toEqual([]);
+  });
+});
+
 describe("dated plan lines (G-17) and evidence (G-19)", () => {
   const item = protocolLibrary[0]!;
   const base = {

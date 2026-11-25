@@ -4,6 +4,8 @@ import { loadCases, runEval } from "./run.js";
 import { scoreCase, spinalLevels, summarize } from "./score.js";
 import type { DraftSections } from "../domain.js";
 import { FakeLlmClient } from "../llm/client.js";
+import { DemoLlmClient } from "../demo/llm.js";
+import { protocolLibrary, settings, template } from "../testing/fixtures.js";
 
 const cases = loadCases(resolve(import.meta.dirname, "../../eval-cases"));
 const routine = cases.find((c) => c.id === "01-routine-follow-up")!;
@@ -18,7 +20,15 @@ const draft = (over: Partial<DraftSections> = {}): DraftSections => ({
 
 describe("draft test set", () => {
   it("loads every synthetic case", () => {
-    expect(cases.map((c) => c.id)).toEqual(["01-routine-follow-up", "02-new-complaint", "03-no-recap", "04-pregnancy-protocols"]);
+    expect(cases.map((c) => c.id)).toEqual([
+      "01-routine-follow-up",
+      "02-new-complaint",
+      "03-no-recap",
+      "04-pregnancy-protocols",
+      "05-no-recording",
+      "06-repeat-protocol",
+      "07-evidence",
+    ]);
   });
 
   it("finds spinal levels the way notes write them", () => {
@@ -65,4 +75,43 @@ describe("draft test set", () => {
     const [score] = await runEval(llm, [routine], { extract: "e", compose: "c" });
     expect(score).toMatchObject({ passed: true, protocols: { got: ["cat-cow"] } });
   });
+
+  describe("cases for unrecorded visits, repeats and citations, through the real pipeline", () => {
+    // The demo stand-in model (rule-based, deterministic) drives both stages, so these check the
+    // pipeline and the scorer together. Real-model results come from `pnpm eval`.
+    const practice = {
+      template: template({ sections: template().sections.map((s) => ({ ...s, carryRule: "carry_unless_contradicted" as const })) }),
+      settings: settings(),
+      protocols: protocolLibrary,
+    };
+    const run = (id: string) => runEval(new DemoLlmClient(), [cases.find((c) => c.id === id)!], { extract: "demo", compose: "demo" }, practice);
+
+    it("05: an unrecorded visit drafts only carried sentences", async () => {
+      const [s] = await run("05-no-recording");
+      expect(s).toMatchObject({ passed: true, invented: [], missing: [] });
+    });
+
+    it("06: a repeat is dated since its first visit, a new item given today", async () => {
+      const [s] = await run("06-repeat-protocol");
+      expect(s).toMatchObject({ passed: true, datingErrors: [], protocols: { expected: ["cat-cow", "wedge"], got: ["cat-cow", "wedge"] } });
+    });
+
+    it("07: today's pain score cites the patient's line", async () => {
+      const [s] = await run("07-evidence");
+      expect(s).toMatchObject({ passed: true, wrongEvidence: [], missing: [] });
+    });
+
+    it("fails a run that cites the wrong line", () => {
+      const c = cases.find((x) => x.id === "07-evidence")!;
+      const s = scoreCase(c, {
+        subjective: [{ text: "Neck 6/10.", source: "updated", fromNoteDate: "2026-11-24", previousText: "Neck 2/10.", evidence: ["Clinician: Any change in the neck since last time?"] }],
+        objective: [{ text: "C5 right posterior.", source: "carried", fromNoteDate: "2026-11-24" }],
+        assessment: [],
+        plan: [],
+      });
+      expect(s.passed).toBe(false);
+      expect(s.wrongEvidence).toEqual(['"6/10" cites the wrong line']);
+    });
+  });
 });
+

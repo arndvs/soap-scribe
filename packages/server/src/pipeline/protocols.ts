@@ -44,13 +44,16 @@ export function matchProtocols(
   const matched: ProtocolMatch[] = [];
   const unmatched: string[] = [];
   for (const { text } of mentions) {
-    let best: ProtocolMatch | undefined;
+    // One sentence can carry two recommendations ("keep the cat-cow, and try a wedge pillow"),
+    // so every item that clears the threshold matches, not only the best one.
+    const hits: ProtocolMatch[] = [];
     for (const item of library) {
       const s = Math.max(score(text, item.title), ...item.aliases.map((a) => score(text, a)));
-      if (s >= MATCH_THRESHOLD && (!best || s > best.score)) best = { mention: text, item, score: s };
+      if (s >= MATCH_THRESHOLD) hits.push({ mention: text, item, score: s });
     }
-    if (best && !matched.some((m) => m.item.id === best!.item.id)) matched.push(best);
-    else if (!best) unmatched.push(text);
+    hits.sort((a, b) => b.score - a.score);
+    for (const hit of hits) if (!matched.some((m) => m.item.id === hit.item.id)) matched.push(hit);
+    if (hits.length === 0) unmatched.push(text);
   }
   return { matched, unmatched };
 }

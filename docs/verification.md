@@ -25,7 +25,7 @@ How to rerun each check, the last recorded result, and what was not run. Update 
 
 ## Draft test set: pass rule
 
-A run passes only if **no case contains an invented finding**. Missing findings and wrong spinal levels are reported per case and should trend down; an invented finding blocks the change.
+A run passes only if **no case contains an invented finding or cites the wrong transcript line**. Cases 05–07 also run in CI through the pipeline with the demo stand-in model, which checks the pipeline and the scorer, not the real model. Missing findings and wrong spinal levels are reported per case and should trend down; an invented finding blocks the change.
 
 The scorer ([`packages/server/src/eval/score.ts`](../packages/server/src/eval/score.ts)) counts an *invented* finding as a spinal level the draft names that neither the transcript nor a previous note mentions, or a phrase the case forbids. It's deterministic, so every failure can be explained.
 
@@ -35,6 +35,9 @@ The scorer ([`packages/server/src/eval/score.ts`](../packages/server/src/eval/sc
 | 02 | New complaint; old finding must not reappear as today's | | | | |
 | 03 | No spoken recap | | | | |
 | 04 | Prenatal, two library recommendations | | | | |
+| 05 | Not recorded: only carried sentences | | | | |
+| 06 | A repeat dated "since", a new item dated "given" | | | | |
+| 07 | Today's pain score cites the patient's line | | | | |
 
 ## Not run here
 

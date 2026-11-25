@@ -1,0 +1,23 @@
+{
+  "id": "05-no-recording",
+  "description": "Visit wasn't recorded: draft from the previous note only; nothing may be marked new or updated",
+  "withoutRecording": true,
+  "previousNotes": [
+    {
+      "date": "2026-11-24",
+      "sections": {
+        "subjective": "Neck 2/10.",
+        "objective": "C5 right posterior. Cervical rotation limited to the left.",
+        "assessment": "Cervical segmental dysfunction, stable.",
+        "plan": "Every two weeks."
+      }
+    }
+  ],
+  "expected": {
+    "mustInclude": { "assessment": ["stable"] },
+    "mustNotInclude": ["improved", "radiating"],
+    "spinalLevels": ["C5"],
+    "protocols": [],
+    "onlyCarried": true
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "07-evidence",
+  "description": "Today's pain score must cite the line where the patient said it, not the clinician's question",
+  "transcript": [
+    { "index": 0, "speaker": "Clinician", "text": "Any change in the neck since last time?" },
+    { "index": 1, "speaker": "Patient", "text": "Worse, about a six out of ten since the weekend." },
+    { "index": 2, "speaker": "Clinician", "text": "Recap: C5 right posterior. Diversified. Cervical rotation limited to the left. Neck six of ten. Return next week." }
+  ],
+  "previousNotes": [
+    {
+      "date": "2026-11-24",
+      "sections": {
+        "subjective": "Neck 2/10.",
+        "objective": "C5 right posterior.",
+        "assessment": "Cervical segmental dysfunction, stable.",
+        "plan": "Every two weeks."
+      }
+    }
+  ],
+  "expected": {
+    "mustInclude": { "subjective": ["6/10"] },
+    "mustNotInclude": ["radiating"],
+    "spinalLevels": ["C5"],
+    "protocols": [],
+    "evidence": [{ "sentence": "6/10", "quote": "six out of ten" }]
+  }
+}
