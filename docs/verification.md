@@ -12,7 +12,9 @@ How to rerun each check, the last recorded result, and what was not run. Update 
 | Repository contract on MongoDB | `TEST_MONGODB_URI=mongodb://localhost:27017 pnpm --filter @soap-scribe/server test` | Passed in CI against `mongo:7`: server suite 72 passed, 0 skipped | 2026-11-24 |
 | GitHub Actions CI (gitleaks + check) | Push to `main` | Both jobs passed on `011cf81` | 2026-11-24 |
 | Extension: page logic, fail-closed insert, Settings first-run render | `pnpm --filter @soap-scribe/extension test` | 13 passed | 2026-11-24 |
-| Typecheck, all three packages | `pnpm typecheck` | Passed | 2026-11-24 |
+| End-to-end: built extension in Chromium on demo mode (8 tests incl. the Jane capture tool) | `pnpm test:e2e` | 8 passed locally (Playwright Chromium build 1243, browser on UTC); CI job `e2e` | 2026-11-24 |
+| Pocket API shapes (day 1) | `POCKET_API_KEY=… pnpm --filter @soap-scribe/server pocket:check` | Not run yet: needs the real key ([first-real-checks.md](first-real-checks.md)) | |
+| Typecheck, all packages | `pnpm typecheck` | Passed | 2026-11-24 |
 | Extension build; bundle checked for secret names | `API_URL=… JANE_HOST=… pnpm --filter @soap-scribe/extension build` | Built; no `POCKET`, `MONGODB` or `pk_` strings in the bundle | 2026-11-24 |
 | No audio, practice or env files tracked | `pnpm check:files` | Passed | 2026-11-24 |
 | Secret scan | `gitleaks detect` (CI) | Not run locally | |

@@ -13,7 +13,8 @@
     "build": "tsx build.ts",
     "start": "node dist/api.js",
     "start:worker": "node dist/worker.js",
-    "demo": "tsx src/demo/main.ts"
+    "demo": "tsx src/demo/main.ts",
+    "pocket:check": "tsx src/scripts/pocket-check.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.700.0",
