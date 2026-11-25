@@ -114,6 +114,24 @@ describe("API", () => {
     expect(actions).toEqual(expect.arrayContaining(["job_confirmed", "draft_composed", "draft_viewed", "draft_inserted"]));
   });
 
+  it("suggests a patient when the schedule is synced after the recording arrives, and survives a re-sync", async () => {
+    const sync = () =>
+      authed(request(app).post("/appointments/sync")).send({
+        date: "2026-12-01",
+        appointments: [{ start: "2026-12-01T18:30:00.000Z", end: "2026-12-01T18:45:00.000Z", janePatientId: "1001", patientDisplayName: "Test Patient A" }],
+      }).expect(200);
+    await webhook(transcribed("rec-1")).expect(200);
+    await worker.fetchAndMatch(); // no schedule yet: nothing to suggest at fetch time
+    await sync();
+    const item = (await authed(request(app).get("/today")).expect(200)).body.items[0];
+    expect(item.suggestedAppointment.janePatientId).toBe("1001");
+
+    await authed(request(app).post(`/jobs/${item.jobId}/confirm`)).send({ appointmentId: item.suggestedAppointment.id }).expect(200);
+    await sync(); // e.g. she opens the schedule again
+    const after = (await authed(request(app).get("/today")).expect(200)).body.items[0];
+    expect(after.confirmedAppointment?.janePatientId).toBe("1001");
+  });
+
   it("returns no draft for a patient without a confirmed visit", async () => {
     const body = (await authed(request(app).post("/drafts/compose")).send({ janePatientId: "2002", previousNotes: [] }).expect(200)).body;
     expect(body.draft).toBeNull();

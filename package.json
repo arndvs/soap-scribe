@@ -12,7 +12,9 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "check:files": "node scripts/check-forbidden-files.mjs",
-    "ci": "pnpm check:files && pnpm typecheck && pnpm test"
+    "ci": "pnpm check:files && pnpm typecheck && pnpm test",
+    "demo": "pnpm --filter @soap-scribe/extension build:demo && pnpm --filter @soap-scribe/server demo",
+    "test:e2e": "pnpm --filter @soap-scribe/e2e test:e2e"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

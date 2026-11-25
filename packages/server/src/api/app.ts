@@ -17,6 +17,7 @@ import type { Repos } from "../repos/types.js";
 import type { Clock } from "../clock.js";
 import { localDate } from "../clock.js";
 import { newId } from "../ids.js";
+import { suggestAppointment } from "../pipeline/match.js";
 import { errorText, type Logger } from "../log.js";
 import { JOB_EVENTS, POCKET_SIGNATURE_HEADER, POCKET_TIMESTAMP_HEADER, parseWebhook, verifyPocketSignature } from "../pocket/client.js";
 import { ConflictError, NotFoundError, type DraftService } from "../services/drafts.js";
@@ -86,7 +87,8 @@ export function createApp(d: AppDeps) {
     const body = AppointmentSyncRequest.parse(req.body);
     await d.repos.appointments.replaceDay(
       body.date,
-      body.appointments.map((a) => ({ ...a, id: newId(), date: body.date })),
+      // Stable IDs: re-syncing the same schedule must not orphan a job's confirmed appointment.
+      body.appointments.map((a) => ({ ...a, id: appointmentId(body.date, a.janePatientId, a.start), date: body.date })),
     );
     res.json({ ok: true, count: body.appointments.length });
   }));
@@ -103,9 +105,7 @@ export function createApp(d: AppDeps) {
         jobId: j.id,
         status: j.status,
         ...(j.recordedAt ? { recordedAt: j.recordedAt } : {}),
-        ...(j.suggestedAppointmentId && byId.get(j.suggestedAppointmentId)
-          ? { suggestedAppointment: byId.get(j.suggestedAppointmentId)! }
-          : {}),
+        ...suggestionFor(j, appointments, byId),
         ...(j.appointmentId && byId.get(j.appointmentId) ? { confirmedAppointment: byId.get(j.appointmentId)! } : {}),
         ...(j.lastError ? { lastError: j.lastError } : {}),
       }));
@@ -245,6 +245,28 @@ export function createApp(d: AppDeps) {
   });
 
   return app;
+}
+
+/** Deterministic, opaque appointment ID from the schedule row. */
+export const appointmentId = (date: string, janePatientId: string, start: string) =>
+  sha256Hex(`${date}|${janePatientId}|${new Date(start).toISOString()}`).slice(0, 24);
+
+/**
+ * Recomputed while a job waits for confirmation, so a schedule synced after the
+ * recording arrived (the end-of-day batch) still gets a suggestion.
+ */
+function suggestionFor(
+  j: { status: string; recordedAt?: string; suggestedAppointmentId?: string },
+  appointments: Parameters<typeof suggestAppointment>[1],
+  byId: Map<string, (typeof appointments)[number]>,
+) {
+  const s =
+    j.status === "needs_confirmation" && j.recordedAt
+      ? suggestAppointment(new Date(j.recordedAt), appointments)
+      : j.suggestedAppointmentId
+        ? byId.get(j.suggestedAppointmentId)
+        : undefined;
+  return s ? { suggestedAppointment: s } : {};
 }
 
 function auth(tokenHash: string) {

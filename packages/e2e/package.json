@@ -1,0 +1,14 @@
+{
+  "name": "@soap-scribe/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/chrome": "^0.0.280"
+  }
+}

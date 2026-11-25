@@ -25,7 +25,7 @@ const cfg = Object.fromEntries(ALLOWLIST.map((k) => [k, process.env[k] ?? fileEn
 if (!cfg.API_URL || !cfg.JANE_HOST) throw new Error("Set API_URL and JANE_HOST (see .env.example)");
 const apiOrigin = new URL(cfg.API_URL).origin;
 
-const out = resolve(import.meta.dirname, "dist");
+const out = resolve(import.meta.dirname, process.env.OUT_DIR ?? "dist");
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
@@ -49,7 +49,9 @@ await build({
 
 cpSync(resolve(import.meta.dirname, "public"), out, { recursive: true });
 
-const janeOrigin = `https://${cfg.JANE_HOST}/*`;
+// Plain http only for the local demo's fake Jane; real Jane is always https.
+const janeScheme = /^localhost(:\d+)?$/.test(cfg.JANE_HOST) ? "http" : "https";
+const janeOrigin = `${janeScheme}://${cfg.JANE_HOST}/*`;
 const manifest = {
   manifest_version: 3,
   name: "SOAP Scribe",

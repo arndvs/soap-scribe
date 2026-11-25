@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsx build.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:demo": "API_URL=http://localhost:4100 JANE_HOST=localhost:4101 OUT_DIR=dist-demo tsx build.ts"
   },
   "dependencies": {
     "@soap-scribe/shared": "workspace:*",

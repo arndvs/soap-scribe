@@ -18,3 +18,6 @@ fixtures/private/
 *.webm
 *.ogg
 eval-results.json
+dist-demo/
+playwright-report/
+test-results/

@@ -46,6 +46,7 @@ TODO: agents drafting, tests deciding what shipped, each change starting as a ti
 |---|---|
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Five diagrams: the whole system, one visit end to end, job status, writing into Jane safely, and where patient data lives |
 | [`docs/decisions.md`](./docs/decisions.md) | Decisions with their reasons, open questions, and what's deferred |
+| [`docs/demo.md`](./docs/demo.md) | Demo mode: the whole flow locally with a fake Pocket, fake Jane and synthetic patients; the end-to-end test |
 | [`docs/ux/`](./docs/ux/) | The UX process applied: user stories, system map, flow, attributes, screen requirements, interface patterns, test plan, and a traceability matrix from every story to the code |
 | [`docs/gaps.md`](./docs/gaps.md) | Known gaps by priority, including what blocks real-patient use |
 | [`docs/verification.md`](./docs/verification.md) | How to run every check, with the last results |
